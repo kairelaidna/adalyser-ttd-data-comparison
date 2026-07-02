@@ -1044,7 +1044,7 @@
     }
 
     .report-overall-visuals.with-insights {
-      grid-template-columns: minmax(0, 1fr) 86mm;
+      grid-template-columns: minmax(0, 1fr) 94mm;
     }
 
     .report-overall-chart {
@@ -1067,24 +1067,24 @@
 
     .report-overall-insights {
       display: grid;
-      gap: 3mm;
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-rows: minmax(0, 1fr);
       min-height: 0;
     }
 
     .report-overall-insights .report-insight-panel {
-      gap: 1.8mm;
-      padding: 3.8mm;
+      align-content: start;
+      gap: 2mm;
+      padding: 4mm;
     }
 
     .report-overall-insights .report-panel-block h4 {
-      font-size: 6.2pt;
+      font-size: 6.1pt;
     }
 
     .report-overall-insights .report-panel-block p,
     .report-overall-insights .report-panel-block li {
-      font-size: 5.85pt;
-      line-height: 1.18;
+      font-size: 5.75pt;
+      line-height: 1.2;
     }
 
     .report-overall-table-card {
@@ -1290,7 +1290,7 @@
         <div class="summary-card">
           <div class="summary-label">CPV</div>
           <div id="cpvValue" class="summary-value">-</div>
-          <div id="cpvNote" class="summary-note">Visits/users</div>
+          <div id="cpvNote" class="summary-note">Visits</div>
         </div>
         <div class="summary-card">
           <div class="summary-label">CPR</div>
@@ -1462,8 +1462,8 @@
         label: "CPV",
         denominator: "users",
         factor: 1,
-        text: "CPV = spend / users or visits",
-        note: "Adalyzer users / TTD visits"
+        text: "CPV = spend / visits",
+        note: "Adalyzer visits / TTD visits"
       },
       CPR: {
         label: "CPR",
@@ -2115,7 +2115,7 @@
       setSummaryComparison(els.cpvValue, formatMetricValue(adalyzerCpv), formatMetricValue(ttdCpv));
       setSummaryComparison(els.cprValue, formatMetricValue(adalyzerCpr), formatMetricValue(ttdCpr));
       setSummaryNoteLines(els.cpvNote, [
-        `Adalyzer users ${formatSummaryCount(selection.adalyzerTotals.users, selection.adalyzerRowCount > 0)}`,
+        `Adalyzer visits ${formatSummaryCount(selection.adalyzerTotals.users, selection.adalyzerRowCount > 0)}`,
         `TTD visits ${formatSummaryCount(selection.ttdTotals.users)}`
       ]);
       setSummaryNoteLines(els.cprNote, [
@@ -2908,7 +2908,7 @@
         `Adalyzer ${metricLabel}: ${formatMetricValue(point.adalyzerValue)}`,
         `TTD ${metricLabel}: ${formatMetricValue(point.ttdValue)}`,
         `Spend: ${moneyFormatter.format(point.ttd ? point.ttd.spend : 0)}`,
-        `A users / T visits: ${numberFormatter.format(point.adalyzer.users)} / ${numberFormatter.format(point.ttd ? point.ttd.users : 0)}`
+        `A visits / TTD visits: ${numberFormatter.format(point.adalyzer.users)} / ${numberFormatter.format(point.ttd ? point.ttd.users : 0)}`
       ];
       const boxWidth = Math.min(232, width - 30);
       const boxHeight = 118;
@@ -3555,7 +3555,7 @@
                   <th>Spend</th>
                   <th>Impressions</th>
                   <th>CPM</th>
-                  <th>${source === "adalyzer" ? "Users" : "Visits"}</th>
+                  <th>Visits</th>
                   <th>CPV</th>
                   <th>Registrations</th>
                   <th>CPR</th>
@@ -3568,7 +3568,7 @@
                 ${renderOverallPerformanceRow(totals, "TOTAL")}
               </tfoot>
             </table>
-            <p class="report-note">Spend is shared across Adalyzer and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyzer delivery fields" : "TTD conversion fields"}.</p>
+            <p class="report-note">Spend is shared across Adalyzer and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyzer visit and registration fields" : "TTD conversion fields"}.</p>
           </section>
         </article>
       `;
@@ -3585,12 +3585,8 @@
             </section>
             <aside class="report-overall-insights">
               <section class="report-insight-panel primary">
-                <div class="report-panel-title">Performance</div>
-                ${renderReportInsightBlocks(insights.slice(0, 2))}
-              </section>
-              <section class="report-insight-panel secondary">
-                <div class="report-panel-title">Breakdowns</div>
-                ${renderReportInsightBlocks(insights.slice(2))}
+                <div class="report-panel-title">Insights</div>
+                ${renderReportInsightBlocks(insights)}
               </section>
             </aside>
           </div>
@@ -3886,7 +3882,7 @@
     function buildOverallPerformanceInsights(source, entries, selection) {
       const sourceLabel = source === "adalyzer" ? "Adalyzer" : "TTD";
       const totals = createOverallTotalsRow(selection, source);
-      const deliveryLabel = source === "adalyzer" ? "users" : "visits";
+      const deliveryLabel = "visits";
       const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
         .filter((row) => row.key !== "na" && row.key !== "unknown");
       const audienceRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).audience, formatAudienceLabel);
@@ -3902,10 +3898,6 @@
         {
           title: "Overall readout",
           body: `${sourceLabel} delivered ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(totals.cpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
-        },
-        {
-          title: "Scale",
-          body: `The matched campaign view covers ${formatWholeNumber(entries.length)} ad groups with ${moneyFormatter.format(selection.ttdTotals.spend)} total spend. Spend is shared across both measurement views for cost calculations.`
         },
         {
           title: "Publisher view",

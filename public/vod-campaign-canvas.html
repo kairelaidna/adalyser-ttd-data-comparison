@@ -1,0 +1,4348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adalyzer and TTD Data Comparison</title>
+  <style>
+    @font-face {
+      font-display: swap;
+      font-family: "Wise Sans";
+      src: local("Wise Sans"), local("WiseSans");
+    }
+
+    :root {
+      --ink: #163300;
+      --muted: #53635a;
+      --line: #d6e0d3;
+      --panel: #ffffff;
+      --page: #f2f6ec;
+      --green: #163300;
+      --green-2: #9fe870;
+      --green-3: #2f6b1f;
+      --blue: #2b5f4a;
+      --google-orange: #f4b400;
+      --ttd-blue: #0066ff;
+      --wise-blue: #00b9ff;
+      --wise-pink: #ff9eb5;
+      --wise-orange: #ffb020;
+      --wise-purple: #7c5cff;
+      --amber: #9f6b00;
+      --red: #b73333;
+      --cream: #fbfdf7;
+      --shadow: 0 18px 46px rgba(22, 51, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f1f5f2;
+      color: var(--ink);
+      font-family: "Wise Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .topbar {
+      align-items: center;
+      background: var(--green);
+      border-radius: 30px;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      margin: 0 auto 18px;
+      max-width: 1280px;
+      padding: 18px 22px;
+    }
+
+    .brand {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    h1 {
+      color: var(--green-2);
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 850;
+      letter-spacing: 0;
+      line-height: 1;
+      margin: 0;
+      max-width: 520px;
+      text-transform: uppercase;
+    }
+
+    .upload-button {
+      align-items: center;
+      background: var(--green-2);
+      border: 0;
+      border-radius: 999px;
+      color: var(--green);
+      cursor: pointer;
+      display: inline-flex;
+      font-size: 12px;
+      font-weight: 850;
+      gap: 8px;
+      justify-content: center;
+      letter-spacing: 0.08em;
+      min-height: 42px;
+      padding: 10px 14px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .upload-actions {
+      display: flex;
+      flex: 0 0 auto;
+      flex-wrap: nowrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .upload-button:focus-within,
+    .upload-button:hover {
+      background: #baff83;
+    }
+
+    .upload-button:disabled {
+      background: #e8ece8;
+      color: #87938c;
+      cursor: not-allowed;
+    }
+
+    .upload-button input {
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+      width: 1px;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: minmax(0, 1fr);
+      margin: 0 auto;
+      max-width: 1280px;
+    }
+
+    .control-band {
+      align-items: end;
+      background: #ffffff;
+      border: 0;
+      border-radius: 24px;
+      box-shadow: none;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(220px, 1.1fr) repeat(2, minmax(150px, 0.5fr)) repeat(2, minmax(150px, 0.5fr));
+      padding: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .field label,
+    .upload-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    select,
+    input[type="date"],
+    .file-name {
+      background: #f5f7f6;
+      border: 0;
+      border-radius: 14px;
+      color: var(--ink);
+      min-height: 44px;
+      outline: none;
+      padding: 0 12px;
+      width: 100%;
+    }
+
+    select {
+      appearance: auto;
+      cursor: pointer;
+    }
+
+    input[type="date"] {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    select:disabled,
+    input[type="date"]:disabled {
+      color: #93a09a;
+      cursor: not-allowed;
+    }
+
+    select:focus,
+    input[type="date"]:focus {
+      border-color: var(--green-2);
+      box-shadow: 0 0 0 3px rgba(159, 232, 112, 0.38);
+    }
+
+    .file-name {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .notice {
+      background: #fbf7df;
+      border: 1px solid #e7d283;
+      border-radius: 8px;
+      color: #5e4300;
+      display: none;
+      font-size: 14px;
+      line-height: 1.45;
+      padding: 12px 14px;
+    }
+
+    .notice.is-visible {
+      display: block;
+    }
+
+    .notice.error {
+      background: #fff0f0;
+      border-color: #efb1b1;
+      color: #8a2424;
+    }
+
+    .chart-panel {
+      background: var(--panel);
+      border: 0;
+      border-radius: 24px;
+      box-shadow: none;
+      min-height: 520px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-head {
+      align-items: center;
+      border-bottom: 1px solid #e4ebe3;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 780;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-transform: uppercase;
+    }
+
+    .chart-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+
+    .metric-pill {
+      align-items: center;
+      background: var(--green-2);
+      border: 0;
+      border-radius: 999px;
+      color: var(--green);
+      display: inline-flex;
+      flex: 0 0 auto;
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: 0.06em;
+      min-height: 34px;
+      padding: 8px 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .legend {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      justify-content: flex-end;
+    }
+
+    .legend-item {
+      align-items: center;
+      color: var(--muted);
+      display: inline-flex;
+      font-size: 13px;
+      font-weight: 700;
+      gap: 7px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .legend-line {
+      border-radius: 999px;
+      display: inline-block;
+      height: 3px;
+      width: 28px;
+    }
+
+    .legend-line.adalyzer {
+      background: var(--google-orange);
+    }
+
+    .legend-line.ttd {
+      background: var(--ttd-blue);
+    }
+
+    .canvas-wrap {
+      height: min(58vh, 560px);
+      min-height: 390px;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    .empty-state {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.92);
+      display: grid;
+      inset: 0;
+      justify-items: center;
+      padding: 26px;
+      position: absolute;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .empty-box {
+      border: 1px dashed #b8c4be;
+      border-radius: 8px;
+      max-width: 460px;
+      padding: 24px;
+    }
+
+    .empty-box strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .empty-box span {
+      color: var(--muted);
+      display: block;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .loading {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.88);
+      display: none;
+      inset: 0;
+      justify-items: center;
+      position: absolute;
+      z-index: 3;
+    }
+
+    .loading.is-visible {
+      display: grid;
+    }
+
+    .progress-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: min(420px, calc(100vw - 48px));
+      padding: 18px;
+    }
+
+    .progress-copy {
+      color: var(--ink);
+      font-weight: 760;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar {
+      background: #e8eeee;
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar span {
+      background: var(--green-2);
+      display: block;
+      height: 100%;
+      transition: width 180ms ease;
+      width: 0%;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-card {
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid #d8e3d4;
+      border-radius: 20px;
+      box-shadow: 0 14px 34px rgba(22, 51, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 94px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .summary-card:nth-child(1) {
+      background: #effbe8;
+      border-color: #cbeeb6;
+    }
+
+    .summary-card:nth-child(2) {
+      background: #eef8ff;
+      border-color: #bde7ff;
+    }
+
+    .summary-card:nth-child(3) {
+      background: #f4f0ff;
+      border-color: #dbd0ff;
+    }
+
+    .summary-card:nth-child(4) {
+      background: #fff5df;
+      border-color: #ffd99a;
+    }
+
+    .summary-card:nth-child(5) {
+      background: #ffeef4;
+      border-color: #ffc7d8;
+    }
+
+    .summary-card:nth-child(6) {
+      background: #ecfbf3;
+      border-color: #beeccd;
+    }
+
+    .summary-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 790;
+      line-height: 1.1;
+      margin-top: 10px;
+      overflow-wrap: anywhere;
+      width: 100%;
+    }
+
+    .summary-comparison {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+    }
+
+    .summary-source {
+      align-items: center;
+      display: grid;
+      gap: 3px;
+      justify-items: center;
+      min-width: 0;
+    }
+
+    .summary-source-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .summary-source-value {
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 790;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .summary-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      line-height: 1.35;
+      margin-top: 6px;
+      text-transform: uppercase;
+      width: 100%;
+    }
+
+    .summary-note-line {
+      display: block;
+    }
+
+    .comparison-panel {
+      background: var(--panel);
+      border: 0;
+      border-radius: 24px;
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    .overall-panel {
+      background: #ffffff;
+      border-radius: 24px;
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .overall-head {
+      align-items: end;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+    }
+
+    .overall-title {
+      font-size: 20px;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      line-height: 1.05;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .overall-tables {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .overall-card,
+    .overview-chart-card {
+      background: #f6f8f8;
+      border: 1px solid #d8e3d4;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .overall-card-head,
+    .overview-chart-head {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+    }
+
+    .overall-card h3,
+    .overview-chart-card h3 {
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 850;
+      letter-spacing: 0.02em;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .overall-source-pill {
+      background: var(--green-2);
+      border-radius: 999px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      padding: 7px 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .overall-table-wrap {
+      overflow-x: auto;
+      padding: 0 12px 12px;
+    }
+
+    .overall-table {
+      min-width: 900px;
+    }
+
+    .overall-table th,
+    .overall-table td {
+      font-size: 12px;
+      padding: 8px 9px;
+    }
+
+    .overall-table tfoot td {
+      background: var(--green-2);
+      color: var(--green);
+      font-weight: 850;
+    }
+
+    .overall-visuals {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+
+    .overview-chart-visual {
+      height: 320px;
+      padding: 0 12px 12px;
+    }
+
+    .overview-chart-visual svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    .comparison-head {
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .comparison-title {
+      font-size: 17px;
+      font-weight: 790;
+      letter-spacing: 0.04em;
+      line-height: 1.2;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .comparison-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .mode-tabs {
+      align-items: center;
+      background: #edf7e3;
+      border: 1px solid #cfe6bf;
+      border-radius: 8px;
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+    }
+
+    .mode-button {
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      color: var(--green);
+      cursor: pointer;
+      font-weight: 760;
+      letter-spacing: 0.04em;
+      min-height: 34px;
+      padding: 7px 12px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .mode-button.is-active {
+      background: var(--green);
+      color: var(--green-2);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      min-width: 1640px;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      padding: 11px 12px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--cream);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 790;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    td {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    th:first-child,
+    td:first-child {
+      left: 0;
+      position: sticky;
+      text-align: left;
+    }
+
+    th:first-child {
+      background: var(--cream);
+      z-index: 1;
+    }
+
+    td:first-child {
+      background: #ffffff;
+      font-weight: 760;
+    }
+
+    tbody tr:hover td {
+      background: #f7fbef;
+    }
+
+    .diff-positive {
+      color: #7c5200;
+      font-weight: 760;
+    }
+
+    .diff-negative {
+      color: var(--green-3);
+      font-weight: 760;
+    }
+
+    .empty-row {
+      color: var(--muted);
+      padding: 22px 14px;
+      text-align: center;
+    }
+
+    .pdf-report {
+      display: none;
+    }
+
+    .report-page {
+      background: #ffffff;
+      color: var(--ink);
+      display: grid;
+      gap: 4mm;
+      grid-template-rows: 24mm 56mm minmax(0, 1fr);
+      height: 210mm;
+      overflow: hidden;
+      padding: 8mm 10mm 9mm;
+      page-break-inside: avoid;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+      width: 297mm;
+    }
+
+    .report-header {
+      align-items: center;
+      display: grid;
+      gap: 5mm;
+      grid-template-columns: minmax(72mm, 96mm) minmax(0, 1fr);
+      justify-content: space-between;
+    }
+
+    .report-title-pill {
+      align-items: center;
+      align-self: stretch;
+      background: var(--green-2);
+      border-radius: 0 16mm 16mm 0;
+      display: grid;
+      margin-left: -10mm;
+      padding: 3mm 12mm 3mm 10mm;
+    }
+
+    .report-title {
+      color: var(--green);
+      font-size: 15pt;
+      font-weight: 850;
+      letter-spacing: 0;
+      line-height: 0.98;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .report-subtitle {
+      color: rgba(22, 51, 0, 0.72);
+      font-size: 6.2pt;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      margin-top: 1.4mm;
+      text-transform: uppercase;
+    }
+
+    .report-kpi-row {
+      align-items: stretch;
+      display: grid;
+      gap: 2.2mm;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      justify-content: flex-end;
+    }
+
+    .report-kpi-row.report-overall-kpis {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .report-kpi {
+      align-content: center;
+      background: #f1f2f1;
+      border: 0;
+      border-radius: 4mm;
+      display: grid;
+      min-width: 0;
+      padding: 2.1mm 2.8mm;
+      text-align: center;
+    }
+
+    .report-kpi span {
+      color: #7f9088;
+      display: block;
+      font-size: 6.4pt;
+      font-weight: 850;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .report-kpi strong {
+      color: var(--green);
+      display: block;
+      font-size: 14pt;
+      font-weight: 850;
+      line-height: 1;
+      margin-top: 1mm;
+    }
+
+    .report-chart {
+      background: #f7f9f7;
+      border: 1.4px solid #dce8d8;
+      border-radius: 5mm;
+      display: block;
+      height: 56mm;
+      overflow: hidden;
+      padding: 2.5mm 3.5mm 2mm;
+      width: 100%;
+    }
+
+    .report-chart svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    .report-bottom {
+      display: grid;
+      gap: 4.2mm;
+      grid-template-columns: 136mm minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .report-table-card {
+      background: #f6f8f8;
+      border: 1.4px solid #dce8d8;
+      border-radius: 5mm;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      padding: 3.5mm 4mm;
+    }
+
+    .report-section-title {
+      color: #90a096;
+      font-size: 7.4pt;
+      font-weight: 850;
+      letter-spacing: 0.16em;
+      margin: 0 0 1.35mm;
+      text-transform: uppercase;
+    }
+
+    .report-table {
+      border-collapse: collapse;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .report-table th,
+    .report-table td {
+      border-bottom: 1px solid #e3e9e8;
+      font-size: 5.55pt;
+      line-height: 1.02;
+      padding: 0.42mm 0.72mm;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .report-table th {
+      background: transparent;
+      color: #90a096;
+      font-size: 5.1pt;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .report-table th:first-child,
+    .report-table td:first-child {
+      position: static;
+      text-align: left;
+    }
+
+    .report-table td:first-child {
+      color: #263b31;
+      font-weight: 850;
+    }
+
+    .report-diff-positive {
+      color: #d32121;
+      font-weight: 850;
+    }
+
+    .report-diff-negative {
+      color: #008c3a;
+      font-weight: 850;
+    }
+
+    .report-insights {
+      display: grid;
+      align-content: start;
+      gap: 4mm;
+      grid-template-rows: minmax(0, 1fr) auto;
+      min-height: 0;
+    }
+
+    .report-insight-panel {
+      border-radius: 5mm;
+      display: grid;
+      gap: 2.5mm;
+      padding: 5mm;
+    }
+
+    .report-insight-panel.primary {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .report-insight-panel.secondary {
+      background: #f6f8f8;
+      color: #263647;
+    }
+
+    .report-panel-title {
+      color: var(--green-2);
+      font-size: 8pt;
+      font-weight: 850;
+      letter-spacing: 0.24em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .report-insight-panel.secondary .report-panel-title {
+      color: #90a096;
+    }
+
+    .report-panel-block {
+      display: grid;
+      gap: 0.8mm;
+    }
+
+    .report-panel-block h4 {
+      font-size: 6.8pt;
+      font-weight: 850;
+      line-height: 1.1;
+      margin: 0;
+    }
+
+    .report-panel-block p,
+    .report-panel-block li {
+      color: #304238;
+      font-size: 6.5pt;
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    .report-insight-panel.primary .report-panel-block p,
+    .report-insight-panel.primary .report-panel-block li {
+      color: #ffffff;
+    }
+
+    .report-panel-block ul {
+      display: grid;
+      gap: 0.65mm;
+      margin: 0;
+      padding-left: 3.2mm;
+    }
+
+    .report-note {
+      color: var(--muted);
+      font-size: 5.15pt;
+      font-style: italic;
+      font-weight: 650;
+      line-height: 1.2;
+      margin: 1.1mm 0 0;
+    }
+
+    .report-page-overall {
+      grid-template-rows: 24mm 58mm minmax(0, 1fr);
+    }
+
+    .report-overall-visuals {
+      display: grid;
+      gap: 4mm;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      min-height: 0;
+    }
+
+    .report-overall-visuals.with-insights {
+      grid-template-columns: minmax(0, 1fr) 86mm;
+    }
+
+    .report-overall-chart {
+      background: #f7f9f7;
+      border: 1.4px solid #dce8d8;
+      border-radius: 5mm;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+      overflow: hidden;
+      padding: 3mm 3.5mm 2.5mm;
+    }
+
+    .report-overall-chart svg {
+      display: block;
+      height: 100%;
+      min-height: 0;
+      width: 100%;
+    }
+
+    .report-overall-insights {
+      display: grid;
+      gap: 3mm;
+      grid-template-rows: minmax(0, 1fr) auto;
+      min-height: 0;
+    }
+
+    .report-overall-insights .report-insight-panel {
+      gap: 1.8mm;
+      padding: 3.8mm;
+    }
+
+    .report-overall-insights .report-panel-block h4 {
+      font-size: 6.2pt;
+    }
+
+    .report-overall-insights .report-panel-block p,
+    .report-overall-insights .report-panel-block li {
+      font-size: 5.85pt;
+      line-height: 1.18;
+    }
+
+    .report-overall-table-card {
+      background: #f6f8f8;
+      border: 1.4px solid #dce8d8;
+      border-radius: 5mm;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: 3.2mm 4mm;
+    }
+
+    .report-overall-table th,
+    .report-overall-table td {
+      font-size: 4.8pt;
+      line-height: 1.02;
+      overflow: hidden;
+      padding: 0.34mm 0.48mm;
+      text-overflow: ellipsis;
+    }
+
+    .report-overall-table th {
+      font-size: 4.45pt;
+    }
+
+    .report-overall-table th:first-child,
+    .report-overall-table td:first-child {
+      max-width: 58mm;
+      width: 58mm;
+    }
+
+    .report-overall-table tfoot td {
+      background: var(--green-2);
+      border-bottom: 0;
+      color: var(--green);
+      font-weight: 850;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      body {
+        background: #ffffff;
+      }
+
+      .shell {
+        display: none;
+      }
+
+      .pdf-report {
+        display: block;
+      }
+
+      .report-page {
+        break-after: page;
+        page-break-after: always;
+      }
+
+      .report-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        padding: 16px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .upload-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .control-band,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .comparison-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .metric-pill {
+        white-space: normal;
+      }
+    }
+
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 21px;
+      }
+
+      .chart-panel {
+        min-height: 480px;
+      }
+
+      .canvas-wrap {
+        min-height: 340px;
+      }
+
+      .summary-value {
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div>
+          <h1>Adalyzer and TTD Data Comparison</h1>
+        </div>
+      </div>
+      <div class="upload-actions">
+        <label class="upload-button">
+          <span id="adalyzerUploadLabel">Upload Adalyzer data</span>
+          <input id="adalyzerInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        </label>
+        <label class="upload-button">
+          <span id="ttdUploadLabel">Upload TTD data</span>
+          <input id="ttdInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        </label>
+        <button id="exportPdfButton" class="upload-button" type="button" disabled>Export PDF</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <section class="control-band" aria-label="Campaign controls">
+        <div class="field">
+          <label for="adGroupSelect">Ad group</label>
+          <select id="adGroupSelect" disabled>
+            <option>Upload both workbooks</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="groupFilterSelect">Filter</label>
+          <select id="groupFilterSelect" disabled>
+            <option value="all">All ad groups</option>
+            <option value="koa">KOA</option>
+            <option value="lal">LAL</option>
+            <option value="capitals">Capitals</option>
+            <option value="ros">ROS</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="metricSelect">Metric</label>
+          <select id="metricSelect" disabled>
+            <option value="CPM">CPM</option>
+            <option value="CPV">CPV</option>
+            <option value="CPR">CPR</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dateFromInput">From</label>
+          <input id="dateFromInput" type="date" disabled>
+        </div>
+        <div class="field">
+          <label for="dateToInput">To (included)</label>
+          <input id="dateToInput" type="date" disabled>
+        </div>
+      </section>
+
+      <div id="notice" class="notice" role="status"></div>
+
+      <section class="summary-grid" aria-label="Selected ad group summary">
+        <div class="summary-card">
+          <div class="summary-label">Date range</div>
+          <div id="rangeValue" class="summary-value">-</div>
+          <div id="rangeNote" class="summary-note"></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Spend</div>
+          <div id="spendValue" class="summary-value">-</div>
+          <div class="summary-note"></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Impressions</div>
+          <div id="impressionsValue" class="summary-value">-</div>
+          <div class="summary-note"></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CPM</div>
+          <div id="cpmValue" class="summary-value">-</div>
+          <div class="summary-note"></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CPV</div>
+          <div id="cpvValue" class="summary-value">-</div>
+          <div id="cpvNote" class="summary-note">Visits/users</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">CPR</div>
+          <div id="cprValue" class="summary-value">-</div>
+          <div id="cprNote" class="summary-note">Registrations</div>
+        </div>
+      </section>
+
+      <section class="chart-panel" aria-label="Campaign metric chart">
+        <div class="chart-head">
+          <div>
+            <h2 id="chartTitle" class="chart-title">ADALYZER VS TTD TREND</h2>
+            <div id="chartMeta" class="chart-meta">UPLOAD ADALYZER DATA AND TTD DATA TO START</div>
+          </div>
+          <div class="legend" aria-label="Chart legend">
+            <span class="legend-item"><span class="legend-line adalyzer"></span>Adalyzer</span>
+            <span class="legend-item"><span class="legend-line ttd"></span>TTD</span>
+            <span id="metricDefinition" class="metric-pill">CPM = spend / impressions x 1,000</span>
+          </div>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap">
+          <canvas id="metricCanvas" aria-label="Line graph"></canvas>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-box">
+              <strong>Upload Adalyzer, then TTD</strong>
+              <span>The chart starts at the earliest daily point for the selected Sales House and adds the TTD line when a matching ad group is found.</span>
+            </div>
+          </div>
+          <div id="loading" class="loading" aria-live="polite">
+            <div class="progress-card">
+              <div id="progressCopy" class="progress-copy">Reading workbook</div>
+              <div class="progress-bar"><span id="progressFill"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="comparison-panel" aria-label="Metric comparison table">
+        <div class="comparison-head">
+          <div>
+            <h2 class="comparison-title">Comparison</h2>
+            <div id="comparisonMeta" class="comparison-meta">Upload both workbooks to compare Adalyzer and TTD.</div>
+          </div>
+          <div class="mode-tabs" role="tablist" aria-label="Comparison view">
+            <button type="button" class="mode-button is-active" data-comparison-mode="daily" aria-selected="true">Daily</button>
+            <button type="button" class="mode-button" data-comparison-mode="weekly" aria-selected="false">Weekly</button>
+            <button type="button" class="mode-button" data-comparison-mode="overall" aria-selected="false">Overall</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Spend</th>
+                <th>A Impr.</th>
+                <th>TTD Impr.</th>
+                <th>A CPM</th>
+                <th>TTD CPM</th>
+                <th>CPM diff %</th>
+                <th>A Visits</th>
+                <th>A CPV</th>
+                <th>TTD Visits</th>
+                <th>TTD CPV</th>
+                <th>CPV diff %</th>
+                <th>A Registrations</th>
+                <th>A CPR</th>
+                <th>TTD Registrations</th>
+                <th>TTD CPR</th>
+                <th>CPR diff %</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonBody">
+              <tr><td class="empty-row" colspan="17">Upload both workbooks to populate the comparison.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="overall-panel" aria-label="Overall performance">
+        <div class="overall-head">
+          <div>
+            <h2 class="overall-title">Overall performance</h2>
+          </div>
+        </div>
+        <div class="overall-tables">
+          <article class="overall-card">
+            <div class="overall-card-head">
+              <h3>Adalyzer data</h3>
+              <span class="overall-source-pill">Overall</span>
+            </div>
+            <div class="overall-table-wrap">
+              <table class="overall-table">
+                <thead>
+                  <tr>
+                    <th>Ad group</th>
+                    <th>Spend</th>
+                    <th>Impressions</th>
+                    <th>CPM</th>
+                    <th>Visits</th>
+                    <th>CPV</th>
+                    <th>Registrations</th>
+                    <th>CPR</th>
+                  </tr>
+                </thead>
+                <tbody id="adalyzerOverallBody">
+                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate Adalyzer totals.</td></tr>
+                </tbody>
+                <tfoot id="adalyzerOverallFoot"></tfoot>
+              </table>
+            </div>
+          </article>
+          <article class="overall-card">
+            <div class="overall-card-head">
+              <h3>TTD data</h3>
+              <span class="overall-source-pill">Overall</span>
+            </div>
+            <div class="overall-table-wrap">
+              <table class="overall-table">
+                <thead>
+                  <tr>
+                    <th>Ad group</th>
+                    <th>Spend</th>
+                    <th>Impressions</th>
+                    <th>CPM</th>
+                    <th>Visits</th>
+                    <th>CPV</th>
+                    <th>Registrations</th>
+                    <th>CPR</th>
+                  </tr>
+                </thead>
+                <tbody id="ttdOverallBody">
+                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate TTD totals.</td></tr>
+                </tbody>
+                <tfoot id="ttdOverallFoot"></tfoot>
+              </table>
+            </div>
+          </article>
+        </div>
+        <div class="overall-visuals">
+          <article class="overview-chart-card">
+            <div class="overview-chart-head">
+              <h3>Spend distribution</h3>
+            </div>
+            <div id="spendDistributionChart" class="overview-chart-visual"></div>
+          </article>
+          <article class="overview-chart-card">
+            <div class="overview-chart-head">
+              <h3>Daily performance trend</h3>
+            </div>
+            <div id="dailyPerformanceChart" class="overview-chart-visual"></div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+  <section id="pdfReport" class="pdf-report" aria-label="Printable PDF report"></section>
+
+  <script>
+    const metricDefinitions = {
+      CPM: {
+        label: "CPM",
+        denominator: "impressions",
+        factor: 1000,
+        text: "CPM = spend / impressions x 1,000",
+        note: "Spend / impressions x 1,000"
+      },
+      CPV: {
+        label: "CPV",
+        denominator: "users",
+        factor: 1,
+        text: "CPV = spend / users or visits",
+        note: "Adalyzer users / TTD visits"
+      },
+      CPR: {
+        label: "CPR",
+        denominator: "registrations",
+        factor: 1,
+        text: "CPR = spend / registrations",
+        note: "Spend / registrations"
+      }
+    };
+
+    const requiredColumnCandidates = {
+      salesHouse: ["saleshouse", "adgroup", "adgroups"],
+      day: ["day", "date"],
+      impressions: ["impressions", "impr"],
+      usersWeb: ["usersweb", "webusers", "userswebuplift"],
+      usersApp: ["usersapp", "appusers", "usersappuplift"],
+      registrationsWeb: ["registrationsweb", "registrationweb", "regsweb", "registrationswebuplift"],
+      registrationsApp: ["registrationsapp", "registrationapp", "regsapp", "registrationsappuplift"]
+    };
+
+    const ttdColumnCandidates = {
+      adGroup: ["adgroup"],
+      day: ["date", "day"],
+      impressions: ["impressions"],
+      spend: ["advertisercostadvcurrency"],
+      visits: ["01totalclickviewconversions", "sumof01totalclickviewconversions"],
+      registrations02: ["02totalclickviewconversions", "sumof02totalclickviewconversions"],
+      registrations03: ["03totalclickviewconversions", "sumof03totalclickviewconversions"],
+      registrations04: ["04totalclickviewconversions", "sumof04totalclickviewconversions"]
+    };
+
+    const ALL_MATCH_KEY = "__all__";
+    const uiFont = "\"Wise Sans\", Inter, system-ui, sans-serif";
+    const filterLabels = {
+      all: "All ad groups",
+      koa: "All KOA ad groups",
+      lal: "All LAL ad groups",
+      capitals: "All Capitals ad groups",
+      ros: "All ROS ad groups"
+    };
+    const chartScopeLabels = {
+      all: "ALL AD GROUPS",
+      koa: "ALL KOA",
+      lal: "ALL LAL",
+      capitals: "ALL CAPITALS",
+      ros: "ALL ROS"
+    };
+
+    const lineStyles = {
+      adalyzer: { color: "#f4b400", label: "Adalyzer" },
+      ttd: { color: "#0066ff", label: "TTD" }
+    };
+
+    const els = {
+      adalyzerInput: document.getElementById("adalyzerInput"),
+      ttdInput: document.getElementById("ttdInput"),
+      adalyzerUploadLabel: document.getElementById("adalyzerUploadLabel"),
+      ttdUploadLabel: document.getElementById("ttdUploadLabel"),
+      exportPdf: document.getElementById("exportPdfButton"),
+      adGroup: document.getElementById("adGroupSelect"),
+      groupFilter: document.getElementById("groupFilterSelect"),
+      metric: document.getElementById("metricSelect"),
+      dateFrom: document.getElementById("dateFromInput"),
+      dateTo: document.getElementById("dateToInput"),
+      notice: document.getElementById("notice"),
+      title: document.getElementById("chartTitle"),
+      meta: document.getElementById("chartMeta"),
+      metricDefinition: document.getElementById("metricDefinition"),
+      canvas: document.getElementById("metricCanvas"),
+      empty: document.getElementById("emptyState"),
+      loading: document.getElementById("loading"),
+      progressCopy: document.getElementById("progressCopy"),
+      progressFill: document.getElementById("progressFill"),
+      rangeValue: document.getElementById("rangeValue"),
+      rangeNote: document.getElementById("rangeNote"),
+      spendValue: document.getElementById("spendValue"),
+      impressionsValue: document.getElementById("impressionsValue"),
+      cpmValue: document.getElementById("cpmValue"),
+      cpvValue: document.getElementById("cpvValue"),
+      cprValue: document.getElementById("cprValue"),
+      cpvNote: document.getElementById("cpvNote"),
+      cprNote: document.getElementById("cprNote"),
+      adalyzerOverallBody: document.getElementById("adalyzerOverallBody"),
+      adalyzerOverallFoot: document.getElementById("adalyzerOverallFoot"),
+      ttdOverallBody: document.getElementById("ttdOverallBody"),
+      ttdOverallFoot: document.getElementById("ttdOverallFoot"),
+      spendDistributionChart: document.getElementById("spendDistributionChart"),
+      dailyPerformanceChart: document.getElementById("dailyPerformanceChart"),
+      comparisonMeta: document.getElementById("comparisonMeta"),
+      comparisonBody: document.getElementById("comparisonBody"),
+      comparisonModes: document.querySelectorAll("[data-comparison-mode]"),
+      pdfReport: document.getElementById("pdfReport")
+    };
+
+    const state = {
+      adalyzer: null,
+      ttd: null,
+      selectedAdGroup: "",
+      selectedMatchKey: "",
+      selectedGroupFilter: "all",
+      selectedMetric: "CPM",
+      selectedDateFrom: "",
+      selectedDateTo: "",
+      selectedComparisonMode: "daily",
+      visibleEntries: [],
+      hoverIndex: null,
+      plot: null
+    };
+
+    const moneyFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0
+    });
+    const moneyFormatterPrecise = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    const metricMoneyFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    const numberFormatter = new Intl.NumberFormat("en-AU", { maximumFractionDigits: 0 });
+    const percentFormatter = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
+    const compactFormatter = new Intl.NumberFormat("en-AU", {
+      notation: "compact",
+      maximumFractionDigits: 1
+    });
+    const dateFormatter = new Intl.DateTimeFormat("en-AU", {
+      day: "2-digit",
+      month: "short",
+      timeZone: "UTC"
+    });
+    const longDateFormatter = new Intl.DateTimeFormat("en-AU", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC"
+    });
+
+    els.adalyzerInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) {
+        await loadAdalyzerWorkbook(file);
+      }
+    });
+
+    els.ttdInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) {
+        await loadTtdWorkbook(file);
+      }
+    });
+
+    els.adGroup.addEventListener("change", () => {
+      state.selectedMatchKey = els.adGroup.value;
+      const entry = getEntryByKey(state.selectedMatchKey);
+      state.selectedAdGroup = state.selectedMatchKey === ALL_MATCH_KEY
+        ? getAllOptionLabel()
+        : entry ? entry.label : "";
+      updateDashboard();
+    });
+
+    els.groupFilter.addEventListener("change", () => {
+      state.selectedGroupFilter = els.groupFilter.value;
+      state.selectedMatchKey = ALL_MATCH_KEY;
+      updateMatchedControls();
+      updateDashboard();
+    });
+
+    els.metric.addEventListener("change", () => {
+      state.selectedMetric = els.metric.value;
+      updateDashboard();
+    });
+
+    els.dateFrom.addEventListener("change", () => {
+      state.selectedDateFrom = els.dateFrom.value;
+      syncDateInputBounds();
+      updateDashboard();
+    });
+
+    els.dateTo.addEventListener("change", () => {
+      state.selectedDateTo = els.dateTo.value;
+      syncDateInputBounds();
+      updateDashboard();
+    });
+
+    els.comparisonModes.forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedComparisonMode = button.dataset.comparisonMode;
+        renderComparisonTable();
+      });
+    });
+
+    els.exportPdf.addEventListener("click", () => {
+      if (!state.adalyzer || !state.ttd) {
+        return;
+      }
+      const isReadyToPrint = buildPdfReport();
+      if (!isReadyToPrint) {
+        showNotice("There is no matched data available for the PDF export.", true);
+        return;
+      }
+      void els.pdfReport.offsetHeight;
+      window.print();
+    });
+
+    els.canvas.addEventListener("mousemove", (event) => {
+      if (!state.plot || !state.plot.points.length) {
+        return;
+      }
+      const rect = els.canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const plot = state.plot.bounds;
+      if (x < plot.left || x > plot.right) {
+        state.hoverIndex = null;
+      } else {
+        const ratio = (x - plot.left) / Math.max(1, plot.width);
+        state.hoverIndex = Math.max(0, Math.min(
+          state.plot.points.length - 1,
+          Math.round(ratio * (state.plot.points.length - 1))
+        ));
+      }
+      drawChart();
+    });
+
+    els.canvas.addEventListener("mouseleave", () => {
+      state.hoverIndex = null;
+      drawChart();
+    });
+
+    window.addEventListener("resize", () => {
+      requestAnimationFrame(drawChart);
+    });
+
+    async function loadAdalyzerWorkbook(file) {
+      try {
+        setLoading(true, "Reading Adalyzer workbook", 8);
+        clearNotice();
+
+        const buffer = await file.arrayBuffer();
+        setLoading(true, "Opening XLSX archive", 18);
+        const zip = parseZip(buffer);
+
+        setLoading(true, "Loading workbook sheet", 32);
+        const sheetPath = await findFirstWorksheetPath(zip);
+        const sharedStrings = await readSharedStrings(zip);
+        const sheetBytes = await zip.read(sheetPath);
+
+        setLoading(true, "Parsing rows", 52);
+        await nextFrame();
+        const sheetXml = new TextDecoder("utf-8").decode(sheetBytes);
+        const parsed = await parseAdalyzerSheetXml(sheetXml, sharedStrings, (progress) => {
+          setLoading(true, "Aggregating Adalyzer rows", 52 + Math.round(progress * 38));
+        });
+
+        if (!parsed.adGroups.length) {
+          throw new Error("No ad groups were found in the Sales House column.");
+        }
+
+        state.adalyzer = parsed;
+        state.selectedMetric = "CPM";
+        setWorkbookStatus("adalyzer", "Adalyzer data uploaded", file.name);
+
+        updateMatchedControls();
+        setLoading(true, "Drawing chart", 96);
+        updateDashboard();
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+        showNotice(error.message || "The workbook could not be loaded.", true);
+      }
+    }
+
+    async function loadTtdWorkbook(file) {
+      try {
+        setLoading(true, "Reading TTD workbook", 8);
+        clearNotice();
+
+        const buffer = await file.arrayBuffer();
+        setLoading(true, "Opening TTD XLSX archive", 18);
+        const zip = parseZip(buffer);
+
+        setLoading(true, "Loading TTD daily sheet", 32);
+        const sheetPath = await findWorksheetPathByName(zip, ["Ad Group_data", "Ad Group Data"]) || await findFirstWorksheetPath(zip);
+        const sharedStrings = await readSharedStrings(zip);
+        const sheetBytes = await zip.read(sheetPath);
+
+        setLoading(true, "Parsing TTD rows", 52);
+        await nextFrame();
+        const sheetXml = new TextDecoder("utf-8").decode(sheetBytes);
+        const parsed = await parseTtdSheetXml(sheetXml, sharedStrings, (progress) => {
+          setLoading(true, "Aggregating TTD rows", 52 + Math.round(progress * 38));
+        });
+
+        if (!parsed.groupsByKey.size) {
+          throw new Error("No TTD ad groups were found in the Ad Group_data sheet.");
+        }
+
+        state.ttd = parsed;
+        setWorkbookStatus("ttd", "TTD data uploaded", file.name);
+        updateMatchedControls();
+        setLoading(true, "Drawing comparison", 96);
+        updateDashboard();
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+        showNotice(error.message || "The TTD workbook could not be loaded.", true);
+      }
+    }
+
+    function chooseInitialEntry(entries) {
+      const preferred = entries.find((entry) => entry.key === "10play|capitals|koa");
+      return preferred || entries[0] || null;
+    }
+
+    function normalizeTotals(totals = {}) {
+      return {
+        spend: Number(totals.spend) || 0,
+        impressions: Number(totals.impressions) || 0,
+        users: Number(totals.users) || 0,
+        visits: Number(totals.visits) || 0,
+        registrations: Number(totals.registrations) || 0
+      };
+    }
+
+    function setWorkbookStatus(kind, label, detail) {
+      const labelEl = kind === "adalyzer" ? els.adalyzerUploadLabel : els.ttdUploadLabel;
+      labelEl.textContent = label;
+      labelEl.title = detail || label;
+    }
+
+    function getAllOptionLabel() {
+      return filterLabels[state.selectedGroupFilter] || "All ad groups";
+    }
+
+    function getSelectionCaption(entries) {
+      if (state.selectedMatchKey === ALL_MATCH_KEY) {
+        return chartScopeLabels[state.selectedGroupFilter] || "ALL AD GROUPS";
+      }
+      return formatCaptionText(entries[0] ? entries[0].label : state.selectedAdGroup);
+    }
+
+    function formatCaptionText(value) {
+      return String(value || "")
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+    }
+
+    function updateMatchedControls() {
+      const matchedEntries = getMatchedEntries();
+      const filteredEntries = filterEntries(matchedEntries, state.selectedGroupFilter);
+      state.visibleEntries = filteredEntries;
+      els.adGroup.innerHTML = "";
+
+      if (!state.adalyzer || !state.ttd) {
+        const option = document.createElement("option");
+        option.textContent = "Upload both workbooks";
+        els.adGroup.appendChild(option);
+        els.adGroup.disabled = true;
+        els.groupFilter.disabled = true;
+        els.metric.disabled = true;
+        els.dateFrom.disabled = true;
+        els.dateTo.disabled = true;
+        els.exportPdf.disabled = true;
+        renderOverallEmpty();
+        renderComparisonTable();
+        return;
+      }
+
+      if (!filteredEntries.length) {
+        const option = document.createElement("option");
+        option.textContent = "No matched ad groups";
+        els.adGroup.appendChild(option);
+        state.selectedAdGroup = "";
+        state.selectedMatchKey = "";
+        els.adGroup.disabled = true;
+      } else {
+        const allOption = document.createElement("option");
+        allOption.value = ALL_MATCH_KEY;
+        allOption.textContent = getAllOptionLabel();
+        els.adGroup.appendChild(allOption);
+
+        for (const entry of filteredEntries) {
+          const option = document.createElement("option");
+          option.value = entry.key;
+          option.textContent = entry.label;
+          els.adGroup.appendChild(option);
+        }
+        if (
+          state.selectedMatchKey !== ALL_MATCH_KEY
+          && !filteredEntries.some((entry) => entry.key === state.selectedMatchKey)
+        ) {
+          state.selectedMatchKey = ALL_MATCH_KEY;
+          state.selectedAdGroup = getAllOptionLabel();
+        } else if (state.selectedMatchKey === ALL_MATCH_KEY || !state.selectedMatchKey) {
+          state.selectedMatchKey = ALL_MATCH_KEY;
+          state.selectedAdGroup = getAllOptionLabel();
+        } else {
+          const selectedEntry = filteredEntries.find((entry) => entry.key === state.selectedMatchKey);
+          state.selectedAdGroup = selectedEntry ? selectedEntry.label : "";
+        }
+        els.adGroup.value = state.selectedMatchKey;
+        els.adGroup.disabled = false;
+      }
+
+      els.groupFilter.disabled = false;
+      els.groupFilter.value = state.selectedGroupFilter;
+      els.metric.disabled = false;
+      els.metric.value = state.selectedMetric;
+      syncDateInputBounds();
+      els.exportPdf.disabled = false;
+      els.empty.style.display = "none";
+    }
+
+    function syncDateInputBounds() {
+      if (!state.adalyzer || !state.ttd) {
+        els.dateFrom.value = "";
+        els.dateTo.value = "";
+        els.dateFrom.removeAttribute("min");
+        els.dateFrom.removeAttribute("max");
+        els.dateTo.removeAttribute("min");
+        els.dateTo.removeAttribute("max");
+        return;
+      }
+
+      const bounds = getCommonDateRangeForEntries(filterEntries(getMatchedEntries(), state.selectedGroupFilter));
+      if (!bounds.start || !bounds.end || bounds.start > bounds.end) {
+        els.dateFrom.disabled = true;
+        els.dateTo.disabled = true;
+        els.dateFrom.value = "";
+        els.dateTo.value = "";
+        els.dateFrom.removeAttribute("min");
+        els.dateFrom.removeAttribute("max");
+        els.dateTo.removeAttribute("min");
+        els.dateTo.removeAttribute("max");
+        return;
+      }
+
+      els.dateFrom.disabled = false;
+      els.dateTo.disabled = false;
+      els.dateFrom.min = bounds.start;
+      els.dateFrom.max = bounds.end;
+      els.dateTo.min = bounds.start;
+      els.dateTo.max = bounds.end;
+
+      state.selectedDateFrom = clampDateKey(state.selectedDateFrom, bounds.start, bounds.end);
+      state.selectedDateTo = clampDateKey(state.selectedDateTo, bounds.start, bounds.end);
+      if (state.selectedDateFrom && state.selectedDateTo && state.selectedDateFrom > state.selectedDateTo) {
+        state.selectedDateTo = state.selectedDateFrom;
+      }
+      els.dateFrom.value = state.selectedDateFrom;
+      els.dateTo.value = state.selectedDateTo;
+    }
+
+    function clampDateKey(value, min, max) {
+      if (!value) {
+        return "";
+      }
+      if (value < min) {
+        return min;
+      }
+      if (value > max) {
+        return max;
+      }
+      return value;
+    }
+
+    function getEffectiveDateRange(entries) {
+      const bounds = getCommonDateRangeForEntries(entries);
+      if (!bounds.start || !bounds.end || bounds.start > bounds.end) {
+        return { start: "", end: "" };
+      }
+      let start = state.selectedDateFrom || bounds.start;
+      let end = state.selectedDateTo || bounds.end;
+      start = clampDateKey(start, bounds.start, bounds.end) || bounds.start;
+      end = clampDateKey(end, bounds.start, bounds.end) || bounds.end;
+      if (start > end) {
+        return { start: "", end: "" };
+      }
+      return { start, end };
+    }
+
+    function getCommonDateRangeForEntries(entries) {
+      const adalyzerRange = { start: "", end: "" };
+      const ttdRange = { start: "", end: "" };
+
+      for (const entry of entries) {
+        const ttdGroup = state.ttd && state.ttd.groupsByKey.get(entry.key);
+        if (ttdGroup) {
+          expandSimpleRange(ttdRange, ttdGroup.start, ttdGroup.end);
+        }
+        const adalyzerGroup = entry.adalyzerName && state.adalyzer
+          ? state.adalyzer.groups.get(entry.adalyzerName)
+          : null;
+        if (adalyzerGroup) {
+          expandSimpleRange(adalyzerRange, adalyzerGroup.start, adalyzerGroup.end);
+        }
+      }
+
+      if (!adalyzerRange.start || !ttdRange.start) {
+        return { start: "", end: "" };
+      }
+      return {
+        start: maxDateKey(adalyzerRange.start, ttdRange.start),
+        end: minDateKey(adalyzerRange.end, ttdRange.end)
+      };
+    }
+
+    function expandSimpleRange(range, start, end) {
+      if (!start || !end) {
+        return;
+      }
+      range.start = range.start ? minDateKey(range.start, start) : start;
+      range.end = range.end ? maxDateKey(range.end, end) : end;
+    }
+
+    function getMatchedEntries() {
+      if (!state.adalyzer || !state.ttd) {
+        return [];
+      }
+      const adalyzerByKey = new Map();
+      for (const name of state.adalyzer.adGroups) {
+        const matchKey = makeMatchKeyFromAdalyzer(name);
+        if (matchKey) {
+          adalyzerByKey.set(matchKey, name);
+        }
+      }
+      return [...state.ttd.groupsByKey.entries()]
+        .map(([key, ttdGroup]) => {
+          const adalyzerName = adalyzerByKey.get(key) || "";
+          return {
+            key,
+            label: adalyzerName || makeCompactLabelFromMatchKey(key),
+            adalyzerName,
+            ttdName: ttdGroup.name
+          };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, "en-AU"));
+    }
+
+    function getEntryByKey(matchKey) {
+      return getMatchedEntries().find((entry) => entry.key === matchKey) || null;
+    }
+
+    function filterEntries(entries, filter) {
+      if (filter === "all") {
+        return entries;
+      }
+      return entries.filter((entry) => {
+        const info = parseMatchKey(entry.key);
+        if (filter === "koa") return info.audience === "koa";
+        if (filter === "lal") return info.audience === "lal";
+        if (filter === "capitals") return info.region === "capitals";
+        if (filter === "ros") return info.region === "roa";
+        return true;
+      });
+    }
+
+    function getSelectedEntries() {
+      const entries = state.visibleEntries.length
+        ? state.visibleEntries
+        : filterEntries(getMatchedEntries(), state.selectedGroupFilter);
+      if (state.selectedMatchKey === ALL_MATCH_KEY) {
+        return entries;
+      }
+      const entry = entries.find((candidate) => candidate.key === state.selectedMatchKey) || getEntryByKey(state.selectedMatchKey);
+      return entry ? [entry] : [];
+    }
+
+    function updateDashboard() {
+      if (!state.adalyzer || !state.ttd || !state.selectedMatchKey) {
+        state.plot = null;
+        els.title.textContent = state.adalyzer && state.ttd
+          ? "ADALYZER VS TTD TREND - NO MATCHED AD GROUP SELECTED"
+          : "ADALYZER VS TTD TREND";
+        els.meta.textContent = state.adalyzer && state.ttd
+          ? "CHANGE THE FILTER TO SEE MATCHED AD GROUPS"
+          : "UPLOAD ADALYZER DATA AND TTD DATA TO START";
+        renderOverallEmpty();
+        renderComparisonTable();
+        drawChart();
+        return;
+      }
+
+      const entries = getSelectedEntries();
+      if (!entries.length) {
+        state.plot = null;
+        els.title.textContent = "ADALYZER VS TTD TREND - NO MATCHED AD GROUPS";
+        els.meta.textContent = "CHANGE THE FILTER TO SEE MATCHED AD GROUPS";
+        renderOverallPerformance();
+        renderComparisonTable();
+        drawChart();
+        return;
+      }
+
+      const selection = aggregateSelection(entries);
+      const isAllSelection = state.selectedMatchKey === ALL_MATCH_KEY;
+      const selectedLabel = isAllSelection ? getAllOptionLabel() : entries[0].label;
+      if (!selection.start || !selection.end) {
+        state.plot = null;
+        els.title.textContent = `ADALYZER VS TTD TREND - ${getSelectionCaption(entries)}`;
+        els.meta.textContent = "SELECT A DATE RANGE WHERE BOTH FILES HAVE DATA";
+        setSummaryEmpty();
+        renderOverallPerformance();
+        renderComparisonTable();
+        drawChart();
+        showNotice("The selected period has no overlapping Adalyzer and TTD data.", true);
+        return;
+      }
+
+      const metric = metricDefinitions[state.selectedMetric];
+      const series = buildComparisonSeries(selection, metric);
+      const cpmMetric = metricDefinitions.CPM;
+      const cpvMetric = metricDefinitions.CPV;
+      const cprMetric = metricDefinitions.CPR;
+      const adalyzerCpm = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cpmMetric) : NaN;
+      const ttdCpm = calculateMetric(selection.ttdTotals, cpmMetric);
+      const adalyzerCpv = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cpvMetric) : NaN;
+      const ttdCpv = calculateMetric(selection.ttdTotals, cpvMetric);
+      const adalyzerCpr = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cprMetric) : NaN;
+      const ttdCpr = calculateMetric(selection.ttdTotals, cprMetric);
+      const start = selection.start;
+      const end = selection.end;
+
+      els.title.textContent = `ADALYZER VS TTD TREND - ${getSelectionCaption(entries)}`;
+      els.meta.textContent = `${metric.label} • ${series.length} DAILY POINTS • ${formatLongDate(start)} TO ${formatLongDate(end)}`;
+      els.metricDefinition.textContent = metric.text;
+      els.rangeValue.textContent = `${formatShortDate(start)} - ${formatShortDate(end)}`;
+      setSummaryNoteLines(els.rangeNote, []);
+      els.spendValue.textContent = moneyFormatter.format(selection.ttdTotals.spend);
+      setSummaryComparison(
+        els.impressionsValue,
+        formatSummaryCount(selection.adalyzerTotals.impressions, selection.adalyzerRowCount > 0),
+        formatSummaryCount(selection.ttdTotals.impressions)
+      );
+      setSummaryComparison(els.cpmValue, formatMetricValue(adalyzerCpm), formatMetricValue(ttdCpm));
+      setSummaryComparison(els.cpvValue, formatMetricValue(adalyzerCpv), formatMetricValue(ttdCpv));
+      setSummaryComparison(els.cprValue, formatMetricValue(adalyzerCpr), formatMetricValue(ttdCpr));
+      setSummaryNoteLines(els.cpvNote, [
+        `Adalyzer users ${formatSummaryCount(selection.adalyzerTotals.users, selection.adalyzerRowCount > 0)}`,
+        `TTD visits ${formatSummaryCount(selection.ttdTotals.users)}`
+      ]);
+      setSummaryNoteLines(els.cprNote, [
+        `Adalyzer regs ${formatSummaryCount(selection.adalyzerTotals.registrations, selection.adalyzerRowCount > 0)}`,
+        `TTD regs ${formatSummaryCount(selection.ttdTotals.registrations)}`
+      ]);
+
+      const warnings = [...state.adalyzer.warnings];
+      if (state.ttd) {
+        warnings.push(...state.ttd.warnings);
+      }
+      if (selection.missingAdalyzer.length) {
+        const missingLabels = selection.missingAdalyzer.slice(0, 3).map((entry) => entry.label).join(", ");
+        const extra = selection.missingAdalyzer.length > 3 ? ` and ${selection.missingAdalyzer.length - 3} more` : "";
+        warnings.push(`No Adalyzer rows found for ${missingLabels}${extra}; those rows show TTD only.`);
+      } else if (isAllSelection) {
+        warnings.push(`Matched ${numberFormatter.format(entries.length)} TTD ad groups to Adalyzer.`);
+      } else {
+        warnings.push(`Matched TTD ad group: ${entries[0].ttdName}.`);
+      }
+      showNotice(warnings.join(" "), false);
+
+      state.plot = {
+        points: series,
+        metric,
+        totals: selection.adalyzerTotals,
+        ttdTotals: selection.ttdTotals,
+        selectedLabel,
+        selectedCount: entries.length
+      };
+      state.hoverIndex = null;
+      renderOverallPerformance();
+      renderComparisonTable();
+      drawChart();
+    }
+
+    function aggregateSelection(entries) {
+      const effectiveRange = getEffectiveDateRange(entries);
+      const selection = {
+        adalyzerDays: new Map(),
+        ttdDays: new Map(),
+        adalyzerTotals: createTotals(),
+        ttdTotals: createTotals(),
+        adalyzerRowCount: 0,
+        ttdRowCount: 0,
+        missingAdalyzer: [],
+        start: effectiveRange.start,
+        end: effectiveRange.end
+      };
+
+      if (!effectiveRange.start || !effectiveRange.end) {
+        return selection;
+      }
+
+      for (const entry of entries) {
+        const ttdGroup = state.ttd.groupsByKey.get(entry.key);
+        if (!ttdGroup) {
+          continue;
+        }
+        const ttdFiltered = addDays(selection.ttdDays, ttdGroup.days, effectiveRange);
+        addTotals(selection.ttdTotals, ttdFiltered.totals);
+        selection.ttdRowCount += ttdFiltered.count;
+
+        const adalyzerGroup = entry.adalyzerName ? state.adalyzer.groups.get(entry.adalyzerName) : null;
+        if (!adalyzerGroup) {
+          selection.missingAdalyzer.push(entry);
+          continue;
+        }
+
+        const adalyzerFiltered = totalDays(adalyzerGroup.days, effectiveRange);
+        selection.adalyzerRowCount += adalyzerFiltered.count;
+        selection.adalyzerTotals.spend += ttdFiltered.totals.spend;
+        selection.adalyzerTotals.impressions += adalyzerFiltered.totals.impressions;
+        selection.adalyzerTotals.users += adalyzerFiltered.totals.users;
+        selection.adalyzerTotals.registrations += adalyzerFiltered.totals.registrations;
+
+        const dateKeys = new Set([...adalyzerGroup.days.keys(), ...ttdGroup.days.keys()]);
+        for (const dateKey of dateKeys) {
+          if (!isDateInRange(dateKey, effectiveRange)) {
+            continue;
+          }
+          const adalyzerRaw = adalyzerGroup.days.get(dateKey) || createTotals();
+          const ttdRaw = ttdGroup.days.get(dateKey);
+          const target = selection.adalyzerDays.get(dateKey) || createTotals();
+          target.spend += ttdRaw ? ttdRaw.spend : 0;
+          target.impressions += adalyzerRaw.impressions;
+          target.users += adalyzerRaw.users;
+          target.registrations += adalyzerRaw.registrations;
+          selection.adalyzerDays.set(dateKey, target);
+        }
+      }
+
+      return selection;
+    }
+
+    function buildComparisonSeries(selection, metric) {
+      const series = [];
+      const start = selection.start;
+      const endDate = selection.end;
+      const current = parseDateKey(start);
+      const end = parseDateKey(endDate);
+      for (let cursor = current; cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+        const dateKey = toDateKey(cursor);
+        const adalyzerRaw = selection.adalyzerDays.get(dateKey);
+        const ttdRaw = selection.ttdDays.get(dateKey);
+        series.push({
+          date: dateKey,
+          adalyzerValue: adalyzerRaw ? calculateMetric(adalyzerRaw, metric) : NaN,
+          ttdValue: ttdRaw ? calculateMetric(ttdRaw, metric) : NaN,
+          adalyzer: adalyzerRaw || createTotals(),
+          ttd: ttdRaw || createTotals()
+        });
+      }
+      return series;
+    }
+
+    function addTotals(target, source) {
+      target.spend += source.spend;
+      target.impressions += source.impressions;
+      target.users += source.users;
+      target.visits += source.visits;
+      target.registrations += source.registrations;
+    }
+
+    function addDays(targetDays, sourceDays, range = null) {
+      const summary = { totals: createTotals(), count: 0 };
+      for (const [dateKey, source] of sourceDays) {
+        if (range && !isDateInRange(dateKey, range)) {
+          continue;
+        }
+        const target = targetDays.get(dateKey) || createTotals();
+        addTotals(target, source);
+        targetDays.set(dateKey, target);
+        addTotals(summary.totals, source);
+        summary.count += 1;
+      }
+      return summary;
+    }
+
+    function totalDays(sourceDays, range) {
+      const summary = { totals: createTotals(), count: 0 };
+      for (const [dateKey, source] of sourceDays) {
+        if (!isDateInRange(dateKey, range)) {
+          continue;
+        }
+        addTotals(summary.totals, source);
+        summary.count += 1;
+      }
+      return summary;
+    }
+
+    function isDateInRange(dateKey, range) {
+      return Boolean(dateKey && range && dateKey >= range.start && dateKey <= range.end);
+    }
+
+    function calculateMetric(row, metric) {
+      const denominator = row[metric.denominator];
+      if (!denominator || denominator <= 0) {
+        return row.spend === 0 ? 0 : NaN;
+      }
+      return (row.spend / denominator) * metric.factor;
+    }
+
+    async function parseAdalyzerSheetXml(xml, sharedStrings, onProgress) {
+      const rowRegex = /<row\b[^>]*>[\s\S]*?<\/row>/g;
+      const rowsTotalEstimate = Math.max(1, (xml.match(/<row\b/g) || []).length);
+      let match;
+      let rowIndex = 0;
+      let headerIndexes = null;
+      let lastProgress = 0;
+
+      const groups = new Map();
+      const warnings = [];
+
+      while ((match = rowRegex.exec(xml))) {
+        rowIndex += 1;
+        const rowValues = parseRowXml(match[0], sharedStrings);
+
+        if (!headerIndexes) {
+          const indexes = resolveHeaderIndexes(rowValues);
+          if (indexes) {
+            headerIndexes = indexes;
+          }
+        } else {
+          addDataRow(groups, rowValues, headerIndexes);
+        }
+
+        if (rowIndex % 650 === 0) {
+          const progress = Math.min(1, rowIndex / rowsTotalEstimate);
+          if (progress - lastProgress > 0.02) {
+            lastProgress = progress;
+            onProgress(progress);
+            await nextFrame();
+          }
+        }
+      }
+
+      if (!headerIndexes) {
+        throw new Error("Could not find the header row with Sales House and Day.");
+      }
+
+      const adGroups = [...groups.keys()].sort((a, b) => a.localeCompare(b, "en-AU"));
+
+      return { groups, adGroups, warnings };
+    }
+
+    async function parseTtdSheetXml(xml, sharedStrings, onProgress) {
+      const rowRegex = /<row\b[^>]*>[\s\S]*?<\/row>/g;
+      const rowsTotalEstimate = Math.max(1, (xml.match(/<row\b/g) || []).length);
+      let match;
+      let rowIndex = 0;
+      let headerIndexes = null;
+
+      const groupsByKey = new Map();
+      const warnings = [];
+
+      while ((match = rowRegex.exec(xml))) {
+        rowIndex += 1;
+        const rowValues = parseRowXml(match[0], sharedStrings);
+
+        if (!headerIndexes) {
+          const indexes = resolveTtdHeaderIndexes(rowValues);
+          if (indexes) {
+            headerIndexes = indexes;
+            if (indexes.registrations04 == null) {
+              warnings.push("TTD column 04 - Total Click + View Conversions was not found, so registrations use 02 + 03.");
+            }
+          }
+        } else {
+          addTtdDataRow(groupsByKey, rowValues, headerIndexes);
+        }
+
+        if (rowIndex % 350 === 0) {
+          onProgress(Math.min(1, rowIndex / rowsTotalEstimate));
+          await nextFrame();
+        }
+      }
+
+      if (!headerIndexes) {
+        throw new Error("Could not find the TTD daily header row with Ad Group and Date.");
+      }
+
+      return { groupsByKey, warnings };
+    }
+
+    function parseRowXml(rowXml, sharedStrings) {
+      const cellRegex = /<c\b([^>]*)>([\s\S]*?)<\/c>/g;
+      const row = [];
+      let cell;
+
+      while ((cell = cellRegex.exec(rowXml))) {
+        const attrs = parseAttributes(cell[1]);
+        const index = columnIndex(attrs.r);
+        if (index == null) {
+          continue;
+        }
+        row[index] = parseCellValue(attrs, cell[2], sharedStrings);
+      }
+      return row;
+    }
+
+    function parseCellValue(attrs, body, sharedStrings) {
+      if (attrs.t === "inlineStr") {
+        return extractRichText(body);
+      }
+
+      const valueMatch = body.match(/<v[^>]*>([\s\S]*?)<\/v>/);
+      if (!valueMatch) {
+        return "";
+      }
+
+      const raw = decodeXml(valueMatch[1]);
+      if (attrs.t === "s") {
+        return sharedStrings[Number(raw)] || "";
+      }
+      if (attrs.t === "b") {
+        return raw === "1" ? "TRUE" : "FALSE";
+      }
+      return raw;
+    }
+
+    function resolveHeaderIndexes(row) {
+      const normalized = row.map(normalizeHeader);
+      if (!normalized.includes("saleshouse") || !normalized.includes("day")) {
+        return null;
+      }
+
+      const indexes = {};
+      for (const [key, candidates] of Object.entries(requiredColumnCandidates)) {
+        indexes[key] = findHeaderIndex(normalized, candidates);
+      }
+
+      const missing = ["salesHouse", "day", "impressions", "usersWeb", "usersApp", "registrationsWeb", "registrationsApp"]
+        .filter((key) => indexes[key] == null);
+      if (missing.length) {
+        throw new Error(`Missing required column: ${missing.join(", ")}.`);
+      }
+      return indexes;
+    }
+
+    function resolveTtdHeaderIndexes(row) {
+      const normalized = row.map(normalizeHeader);
+      if (!normalized.includes("adgroup") || !normalized.includes("date")) {
+        return null;
+      }
+
+      const indexes = {};
+      for (const [key, candidates] of Object.entries(ttdColumnCandidates)) {
+        indexes[key] = findHeaderIndex(normalized, candidates);
+      }
+
+      const missing = ["adGroup", "day", "impressions", "spend", "visits", "registrations02", "registrations03"]
+        .filter((key) => indexes[key] == null);
+      if (missing.length) {
+        throw new Error(`Missing required TTD column: ${missing.join(", ")}.`);
+      }
+      return indexes;
+    }
+
+    function findHeaderIndex(normalizedHeaders, candidates) {
+      for (const candidate of candidates) {
+        const direct = normalizedHeaders.indexOf(candidate);
+        if (direct !== -1) {
+          return direct;
+        }
+      }
+      return null;
+    }
+
+    function addDataRow(groups, row, indexes) {
+      const adGroup = cleanText(row[indexes.salesHouse]);
+      const day = parseDateValue(row[indexes.day]);
+      if (!adGroup || !day || adGroup === "Sales House") {
+        return;
+      }
+
+      const group = getOrCreateGroup(groups, adGroup);
+      const daily = group.days.get(day) || createTotals();
+      const impressions = parseNumber(row[indexes.impressions]);
+      const users = parseNumber(row[indexes.usersWeb]) + parseNumber(row[indexes.usersApp]);
+      const registrations = parseNumber(row[indexes.registrationsWeb]) + parseNumber(row[indexes.registrationsApp]);
+
+      daily.impressions += impressions;
+      daily.users += users;
+      daily.registrations += registrations;
+      group.days.set(day, daily);
+
+      group.totals.impressions += impressions;
+      group.totals.users += users;
+      group.totals.registrations += registrations;
+      group.rowCount += 1;
+      group.start = group.start ? minDateKey(group.start, day) : day;
+      group.end = group.end ? maxDateKey(group.end, day) : day;
+    }
+
+    function addTtdDataRow(groupsByKey, row, indexes) {
+      const adGroup = cleanText(row[indexes.adGroup]);
+      const day = parseDateValue(row[indexes.day]);
+      const matchKey = makeMatchKeyFromTtd(adGroup);
+      if (!adGroup || !day || !matchKey) {
+        return;
+      }
+
+      const group = getOrCreateTtdGroup(groupsByKey, matchKey, adGroup);
+      const daily = group.days.get(day) || createTotals();
+      const spend = parseNumber(row[indexes.spend]);
+      const impressions = parseNumber(row[indexes.impressions]);
+      const visits = parseNumber(row[indexes.visits]);
+      const registrations = parseNumber(row[indexes.registrations02])
+        + parseNumber(row[indexes.registrations03])
+        + (indexes.registrations04 == null ? 0 : parseNumber(row[indexes.registrations04]));
+
+      daily.spend += spend;
+      daily.impressions += impressions;
+      daily.users += visits;
+      daily.visits += visits;
+      daily.registrations += registrations;
+      group.days.set(day, daily);
+
+      group.totals.spend += spend;
+      group.totals.impressions += impressions;
+      group.totals.users += visits;
+      group.totals.visits += visits;
+      group.totals.registrations += registrations;
+      group.rowCount += 1;
+      group.start = group.start ? minDateKey(group.start, day) : day;
+      group.end = group.end ? maxDateKey(group.end, day) : day;
+    }
+
+    function getOrCreateGroup(groups, adGroup) {
+      if (!groups.has(adGroup)) {
+        groups.set(adGroup, {
+          days: new Map(),
+          totals: createTotals(),
+          rowCount: 0,
+          start: "",
+          end: ""
+        });
+      }
+      return groups.get(adGroup);
+    }
+
+    function getOrCreateTtdGroup(groupsByKey, matchKey, adGroup) {
+      if (!groupsByKey.has(matchKey)) {
+        groupsByKey.set(matchKey, {
+          name: adGroup,
+          days: new Map(),
+          totals: createTotals(),
+          rowCount: 0,
+          start: "",
+          end: ""
+        });
+      }
+      return groupsByKey.get(matchKey);
+    }
+
+    function createTotals() {
+      return {
+        spend: 0,
+        impressions: 0,
+        users: 0,
+        visits: 0,
+        registrations: 0
+      };
+    }
+
+    function makeMatchKeyFromAdalyzer(name) {
+      const normalized = normalizeName(name);
+      const publisher = findPublisher(normalized);
+      const region = findRegion(normalized);
+      const audience = findAudience(normalized);
+
+      if (!region || !audience) {
+        return "";
+      }
+      if (!publisher && audience !== "per" && audience !== "performance") {
+        return "";
+      }
+      return [publisher || "na", region, audience].join("|");
+    }
+
+    function makeMatchKeyFromTtd(name) {
+      const normalized = normalizeName(name);
+      const publisher = findPublisher(normalized) || (normalized.includes("na") ? "na" : "");
+      const region = findRegion(normalized);
+      const audience = findAudience(normalized);
+
+      if (!region || !audience) {
+        return "";
+      }
+      return [publisher || "na", region, audience].join("|");
+    }
+
+    function parseMatchKey(matchKey) {
+      const [publisher = "", region = "", audience = ""] = String(matchKey || "").split("|");
+      return { publisher, region, audience };
+    }
+
+    function makeCompactLabelFromMatchKey(matchKey) {
+      const { publisher, region, audience } = parseMatchKey(matchKey);
+      const publisherLabels = {
+        "10play": "10_Play",
+        "7plus": "7Plus",
+        "9now": "9Now",
+        samsung: "Samsung",
+        sbs: "SBS",
+        na: "OM"
+      };
+      const audienceLabels = {
+        koa: "KOA",
+        lal: "LAL",
+        per: "PER",
+        performance: "Performance"
+      };
+      const regionLabels = {
+        capitals: "Capitals",
+        roa: "ROA"
+      };
+      return [
+        publisherLabels[publisher] || publisher || "Unknown",
+        audienceLabels[audience] || audience || "Unknown",
+        regionLabels[region] || region || "Unknown"
+      ].join("-");
+    }
+
+    function normalizeName(value) {
+      return cleanText(value)
+        .toLowerCase()
+        .replace(/\+/g, "plus")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    }
+
+    function findPublisher(normalized) {
+      const compact = normalized.replace(/\s+/g, "");
+      if (compact.includes("10play")) return "10play";
+      if (compact.includes("7plus") || compact.includes("7pus")) return "7plus";
+      if (compact.includes("9now")) return "9now";
+      if (compact.includes("samsung")) return "samsung";
+      if (compact.includes("sbs")) return "sbs";
+      return "";
+    }
+
+    function findRegion(normalized) {
+      const words = normalized.split(/\s+/);
+      if (words.includes("capitals")) return "capitals";
+      if (words.includes("roa") || words.includes("ros")) return "roa";
+      return "";
+    }
+
+    function findAudience(normalized) {
+      const compact = normalized.replace(/\s+/g, "");
+      const words = normalized.split(/\s+/);
+      if (words.includes("koa")) return "koa";
+      if (words.includes("lal")) return "lal";
+      if (words.includes("per") || normalized.includes("player event retargeting")) return "per";
+      if (compact.includes("performanceplus") || words.includes("performance")) return "performance";
+      return "";
+    }
+
+    function drawChart() {
+      const canvas = els.canvas;
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+
+      if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+      }
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      if (!state.plot || !state.plot.points.length) {
+        drawEmptyGrid(ctx, width, height);
+        return;
+      }
+
+      const points = state.plot.points;
+      const values = points
+        .flatMap((point) => [point.adalyzerValue, point.ttdValue])
+        .filter((value) => Number.isFinite(value));
+      const left = width < 620 ? 52 : 72;
+      const right = 24;
+      const top = 30;
+      const bottom = width < 620 ? 62 : 54;
+      const plotWidth = Math.max(1, width - left - right);
+      const plotHeight = Math.max(1, height - top - bottom);
+      const yMax = getNiceMax(Math.max(0, ...values));
+      const yMin = 0;
+      const bounds = {
+        left,
+        right: width - right,
+        top,
+        bottom: height - bottom,
+        width: plotWidth,
+        height: plotHeight
+      };
+
+      state.plot.bounds = bounds;
+
+      drawAxes(ctx, bounds, yMin, yMax, points, width);
+      drawLine(ctx, bounds, points, yMin, yMax, "ttdValue", lineStyles.ttd.color);
+      drawLine(ctx, bounds, points, yMin, yMax, "adalyzerValue", lineStyles.adalyzer.color);
+      drawValueLabels(ctx, bounds, points, yMin, yMax, width);
+      drawHover(ctx, bounds, points, yMin, yMax, width, height);
+    }
+
+    function drawEmptyGrid(ctx, width, height) {
+      const left = width < 620 ? 52 : 72;
+      const top = 30;
+      const bottom = 54;
+      const right = 24;
+      const bounds = {
+        left,
+        top,
+        right: width - right,
+        bottom: height - bottom,
+        width: width - left - right,
+        height: height - top - bottom
+      };
+      ctx.strokeStyle = "#e2e8e4";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i += 1) {
+        const y = bounds.top + (bounds.height * i) / 4;
+        drawLinePath(ctx, bounds.left, y, bounds.right, y);
+      }
+    }
+
+    function drawAxes(ctx, bounds, yMin, yMax, points, width) {
+      ctx.save();
+      ctx.strokeStyle = "#d9e1dd";
+      ctx.fillStyle = "#637067";
+      ctx.lineWidth = 1;
+      ctx.font = `12px ${uiFont}`;
+      ctx.textBaseline = "middle";
+
+      const ticks = 4;
+      for (let i = 0; i <= ticks; i += 1) {
+        const value = yMin + ((yMax - yMin) * (ticks - i)) / ticks;
+        const y = bounds.top + (bounds.height * i) / ticks;
+        drawLinePath(ctx, bounds.left, y, bounds.right, y);
+        ctx.textAlign = "right";
+        ctx.fillText(formatAxisValue(value), bounds.left - 10, y);
+      }
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const maxLabels = width < 620 ? 4 : 7;
+      const labelIndexes = getLabelIndexes(points.length, maxLabels);
+      for (const index of labelIndexes) {
+        const point = points[index];
+        const x = xForIndex(bounds, index, points.length);
+        ctx.fillText(formatShortDate(point.date), x, bounds.bottom + 14);
+      }
+
+      ctx.strokeStyle = "#aebbb5";
+      drawLinePath(ctx, bounds.left, bounds.bottom, bounds.right, bounds.bottom);
+      ctx.restore();
+    }
+
+    function drawValueLabels(ctx, bounds, points, yMin, yMax, width) {
+      const maxLabels = width < 620 ? 4 : 7;
+      const indexes = points.length <= 14
+        ? Array.from({ length: points.length }, (_, index) => index)
+        : getLabelIndexes(points.length, maxLabels);
+
+      ctx.save();
+      ctx.font = `700 11px ${uiFont}`;
+      ctx.textBaseline = "middle";
+      const candidates = [];
+      for (const index of indexes) {
+        const point = points[index];
+        const x = xForIndex(bounds, index, points.length);
+        const hasAdalyzer = Number.isFinite(point.adalyzerValue);
+        const hasTtd = Number.isFinite(point.ttdValue);
+        const adalyzerY = hasAdalyzer ? yForValue(bounds, point.adalyzerValue, yMin, yMax) : null;
+        const ttdY = hasTtd ? yForValue(bounds, point.ttdValue, yMin, yMax) : null;
+        const shouldSplit = hasAdalyzer && hasTtd && Math.abs(adalyzerY - ttdY) < 22;
+
+        if (hasTtd) {
+          candidates.push({
+            x,
+            y: ttdY,
+            text: formatMetricValue(point.ttdValue),
+            color: lineStyles.ttd.color,
+            preferredOffset: shouldSplit ? 18 : -18
+          });
+        }
+        if (hasAdalyzer) {
+          candidates.push({
+            x,
+            y: adalyzerY,
+            text: formatMetricValue(point.adalyzerValue),
+            color: lineStyles.adalyzer.color,
+            preferredOffset: shouldSplit ? -18 : 18
+          });
+        }
+      }
+
+      const placed = [];
+      for (const candidate of candidates) {
+        const offsets = getLabelOffsetOptions(candidate.preferredOffset);
+        const placement = offsets
+          .map((offsetY) => ({
+            ...candidate,
+            box: getValueLabelBox(ctx, bounds, candidate.x, candidate.y, candidate.text, offsetY)
+          }))
+          .find((option) => !placed.some((label) => boxesOverlap(option.box, label.box, 4)));
+
+        if (placement) {
+          placed.push(placement);
+        }
+      }
+
+      for (const label of placed) {
+        drawPointValueLabel(ctx, label.box, label.text, label.color);
+      }
+      ctx.restore();
+    }
+
+    function getLabelOffsetOptions(preferredOffset) {
+      const sign = preferredOffset >= 0 ? 1 : -1;
+      const distances = [Math.abs(preferredOffset), 32, 48, 64, 82];
+      const offsets = [];
+      for (const distance of distances) {
+        offsets.push(sign * distance, -sign * distance);
+      }
+      offsets.push(0);
+      return [...new Set(offsets)];
+    }
+
+    function getValueLabelBox(ctx, bounds, x, y, text, offsetY) {
+      const textWidth = ctx.measureText ? ctx.measureText(text).width : text.length * 7;
+      const labelWidth = textWidth + 10;
+      const labelHeight = 18;
+      const labelX = Math.max(bounds.left + 2, Math.min(bounds.right - labelWidth - 2, x - labelWidth / 2));
+      const labelY = Math.max(bounds.top + 2, Math.min(bounds.bottom - labelHeight - 2, y + offsetY - labelHeight / 2));
+      return { x: labelX, y: labelY, width: labelWidth, height: labelHeight };
+    }
+
+    function boxesOverlap(a, b, padding) {
+      return a.x - padding < b.x + b.width
+        && a.x + a.width + padding > b.x
+        && a.y - padding < b.y + b.height
+        && a.y + a.height + padding > b.y;
+    }
+
+    function drawPointValueLabel(ctx, box, text, color) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      roundedRect(ctx, box.x, box.y, box.width, box.height, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.fillText(text, box.x + box.width / 2, box.y + box.height / 2);
+    }
+
+    function drawLine(ctx, bounds, points, yMin, yMax, valueKey, color, dash = []) {
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = color;
+      ctx.setLineDash(dash);
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+
+      let started = false;
+      points.forEach((point, index) => {
+        const value = point[valueKey];
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        const x = xForIndex(bounds, index, points.length);
+        const y = yForValue(bounds, value, yMin, yMax);
+        if (!started) {
+          ctx.moveTo(x, y);
+          started = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      const endpointIndexes = points.length > 1 ? [0, points.length - 1] : [0];
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      for (const index of endpointIndexes) {
+        const point = points[index];
+        const value = point[valueKey];
+        if (!Number.isFinite(value)) {
+          continue;
+        }
+        const x = xForIndex(bounds, index, points.length);
+        const y = yForValue(bounds, value, yMin, yMax);
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHover(ctx, bounds, points, yMin, yMax, width, height) {
+      if (state.hoverIndex == null) {
+        return;
+      }
+      const point = points[state.hoverIndex];
+      const hasAdalyzer = point && Number.isFinite(point.adalyzerValue);
+      const hasTtd = point && Number.isFinite(point.ttdValue);
+      if (!hasAdalyzer && !hasTtd) {
+        return;
+      }
+
+      const x = xForIndex(bounds, state.hoverIndex, points.length);
+      const focusValue = hasAdalyzer ? point.adalyzerValue : point.ttdValue;
+      const y = yForValue(bounds, focusValue, yMin, yMax);
+      const metricLabel = state.plot.metric.label;
+      const lines = [
+        formatLongDate(point.date),
+        `Adalyzer ${metricLabel}: ${formatMetricValue(point.adalyzerValue)}`,
+        `TTD ${metricLabel}: ${formatMetricValue(point.ttdValue)}`,
+        `Spend: ${moneyFormatter.format(point.ttd ? point.ttd.spend : 0)}`,
+        `A users / T visits: ${numberFormatter.format(point.adalyzer.users)} / ${numberFormatter.format(point.ttd ? point.ttd.users : 0)}`
+      ];
+      const boxWidth = Math.min(232, width - 30);
+      const boxHeight = 118;
+      const boxX = x + boxWidth + 18 > width ? x - boxWidth - 16 : x + 16;
+      const boxY = Math.max(14, Math.min(height - boxHeight - 14, y - 48));
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(23, 63, 53, 0.28)";
+      ctx.lineWidth = 1;
+      drawLinePath(ctx, x, bounds.top, x, bounds.bottom);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#c7d4ce";
+      ctx.lineWidth = 1;
+      roundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#17211b";
+      ctx.font = `700 13px ${uiFont}`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(lines[0], boxX + 12, boxY + 12);
+
+      ctx.font = `12px ${uiFont}`;
+      ctx.fillStyle = "#637067";
+      for (let i = 1; i < lines.length; i += 1) {
+        ctx.fillText(lines[i], boxX + 12, boxY + 13 + i * 19);
+      }
+
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = lineStyles.adalyzer.color;
+      ctx.lineWidth = 2;
+      if (hasAdalyzer) {
+        ctx.beginPath();
+        ctx.arc(x, yForValue(bounds, point.adalyzerValue, yMin, yMax), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      if (hasTtd) {
+        ctx.strokeStyle = lineStyles.ttd.color;
+        ctx.beginPath();
+        ctx.arc(x, yForValue(bounds, point.ttdValue, yMin, yMax), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawLinePath(ctx, x1, y1, x2, y2) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function roundedRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    function xForIndex(bounds, index, count) {
+      if (count <= 1) {
+        return bounds.left + bounds.width / 2;
+      }
+      return bounds.left + (bounds.width * index) / (count - 1);
+    }
+
+    function yForValue(bounds, value, min, max) {
+      const ratio = (value - min) / Math.max(1, max - min);
+      return bounds.bottom - ratio * bounds.height;
+    }
+
+    function getLabelIndexes(count, maxLabels) {
+      if (count <= maxLabels) {
+        return Array.from({ length: count }, (_, index) => index);
+      }
+      const indexes = new Set();
+      const step = (count - 1) / (maxLabels - 1);
+      for (let i = 0; i < maxLabels; i += 1) {
+        indexes.add(Math.round(i * step));
+      }
+      return [...indexes].sort((a, b) => a - b);
+    }
+
+    function getNiceMax(rawMax) {
+      if (!Number.isFinite(rawMax) || rawMax <= 0) {
+        return 1;
+      }
+      const exponent = Math.floor(Math.log10(rawMax));
+      const base = Math.pow(10, exponent);
+      const scaled = rawMax / base;
+      const nice = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+      return nice * base;
+    }
+
+    function formatAxisValue(value) {
+      return formatDollarMetric(value);
+    }
+
+    function formatMetricValue(value) {
+      return formatDollarMetric(value);
+    }
+
+    function formatDollarMetric(value) {
+      if (!Number.isFinite(value)) {
+        return "-";
+      }
+      if (Math.abs(value) >= 1000) {
+        return `$${compactFormatter.format(value)}`;
+      }
+      return metricMoneyFormatter.format(value);
+    }
+
+    function formatPair(adalyzerValue, ttdValue) {
+      const adalyzerText = Number.isFinite(adalyzerValue) ? compactFormatter.format(adalyzerValue) : "-";
+      const ttdText = Number.isFinite(ttdValue) ? compactFormatter.format(ttdValue) : "-";
+      return `${adalyzerText} / ${ttdText}`;
+    }
+
+    function formatMetricPair(adalyzerValue, ttdValue) {
+      return `${formatMetricValue(adalyzerValue)} / ${formatMetricValue(ttdValue)}`;
+    }
+
+    function formatSummaryCount(value, isAvailable = true) {
+      if (!isAvailable || !Number.isFinite(value)) {
+        return "-";
+      }
+      return compactFormatter.format(value);
+    }
+
+    function setSummaryComparison(element, adalyzerText, ttdText) {
+      element.innerHTML = `
+        <span class="summary-comparison">
+          <span class="summary-source">
+            <span class="summary-source-label">Adalyzer</span>
+            <span class="summary-source-value">${escapeHtml(adalyzerText)}</span>
+          </span>
+          <span class="summary-source">
+            <span class="summary-source-label">TTD</span>
+            <span class="summary-source-value">${escapeHtml(ttdText)}</span>
+          </span>
+        </span>
+      `;
+    }
+
+    function setSummaryNoteLines(element, lines) {
+      element.innerHTML = lines
+        .map((line) => `<span class="summary-note-line">${escapeHtml(line)}</span>`)
+        .join("");
+    }
+
+    function setSummaryEmpty() {
+      els.rangeValue.textContent = "-";
+      els.spendValue.textContent = "-";
+      setSummaryComparison(els.impressionsValue, "-", "-");
+      setSummaryComparison(els.cpmValue, "-", "-");
+      setSummaryComparison(els.cpvValue, "-", "-");
+      setSummaryComparison(els.cprValue, "-", "-");
+      setSummaryNoteLines(els.rangeNote, []);
+      setSummaryNoteLines(els.cpvNote, []);
+      setSummaryNoteLines(els.cprNote, []);
+    }
+
+    function renderOverallEmpty() {
+      setOverallTableEmpty(els.adalyzerOverallBody, els.adalyzerOverallFoot, "Upload both workbooks to populate Adalyzer totals.");
+      setOverallTableEmpty(els.ttdOverallBody, els.ttdOverallFoot, "Upload both workbooks to populate TTD totals.");
+      els.spendDistributionChart.innerHTML = createEmptyOverviewSvg("Spend distribution");
+      els.dailyPerformanceChart.innerHTML = createEmptyOverviewSvg("Daily performance trend");
+    }
+
+    function setOverallTableEmpty(body, foot, message) {
+      body.innerHTML = `<tr><td class="empty-row" colspan="8">${escapeHtml(message)}</td></tr>`;
+      foot.innerHTML = "";
+    }
+
+    function renderOverallPerformance() {
+      if (!state.adalyzer || !state.ttd) {
+        renderOverallEmpty();
+        return;
+      }
+      const entries = filterEntries(getMatchedEntries(), "all");
+      if (!entries.length) {
+        renderOverallEmpty();
+        return;
+      }
+
+      const selection = aggregateSelection(entries);
+      if (!selection.start || !selection.end) {
+        setOverallTableEmpty(els.adalyzerOverallBody, els.adalyzerOverallFoot, "No overlapping data for the selected period.");
+        setOverallTableEmpty(els.ttdOverallBody, els.ttdOverallFoot, "No overlapping data for the selected period.");
+        els.spendDistributionChart.innerHTML = createEmptyOverviewSvg("Spend distribution");
+        els.dailyPerformanceChart.innerHTML = createEmptyOverviewSvg("Daily performance trend");
+        return;
+      }
+      renderOverallSourceTable("adalyzer", entries, selection);
+      renderOverallSourceTable("ttd", entries, selection);
+      els.spendDistributionChart.innerHTML = createSpendDistributionSvg(entries);
+      els.dailyPerformanceChart.innerHTML = createDailyPerformanceSvg(selection, "ttd");
+    }
+
+    function renderOverallSourceTable(source, entries, selection) {
+      const body = source === "adalyzer" ? els.adalyzerOverallBody : els.ttdOverallBody;
+      const foot = source === "adalyzer" ? els.adalyzerOverallFoot : els.ttdOverallFoot;
+      const rows = buildOverallPerformanceRows(entries, source);
+      body.innerHTML = rows.map((row) => renderOverallPerformanceRow(row)).join("");
+      const totals = createOverallTotalsRow(selection, source);
+      foot.innerHTML = renderOverallPerformanceRow(totals, "TOTAL");
+    }
+
+    function buildOverallPerformanceRows(entries, source) {
+      return entries.map((entry) => {
+        const selection = aggregateSelection([entry]);
+        const delivery = source === "adalyzer" ? selection.adalyzerTotals : selection.ttdTotals;
+        return createOverallPerformanceRow(
+          entry.label,
+          selection.ttdTotals.spend,
+          delivery.impressions,
+          delivery.users,
+          delivery.registrations
+        );
+      }).sort((a, b) => b.spend - a.spend || a.label.localeCompare(b.label, "en-AU"));
+    }
+
+    function createOverallTotalsRow(selection, source) {
+      const delivery = source === "adalyzer" ? selection.adalyzerTotals : selection.ttdTotals;
+      return createOverallPerformanceRow(
+        "TOTAL",
+        selection.ttdTotals.spend,
+        delivery.impressions,
+        delivery.users,
+        delivery.registrations
+      );
+    }
+
+    function createOverallPerformanceRow(label, spend, impressions, visits, registrations) {
+      return {
+        label,
+        spend,
+        impressions,
+        cpm: calculateValueMetric(spend, impressions, 1000),
+        visits,
+        cpv: calculateValueMetric(spend, visits, 1),
+        registrations,
+        cpr: calculateValueMetric(spend, registrations, 1)
+      };
+    }
+
+    function calculateValueMetric(spend, denominator, factor) {
+      if (!denominator || denominator <= 0) {
+        return spend === 0 ? 0 : NaN;
+      }
+      return (spend / denominator) * factor;
+    }
+
+    function renderOverallPerformanceRow(row, labelOverride = "") {
+      return `
+        <tr>
+          <td>${escapeHtml(labelOverride || row.label)}</td>
+          <td>${moneyFormatterPrecise.format(row.spend)}</td>
+          <td>${formatWholeNumber(row.impressions)}</td>
+          <td>${formatMetricValue(row.cpm)}</td>
+          <td>${formatWholeNumber(row.visits)}</td>
+          <td>${formatMetricValue(row.cpv)}</td>
+          <td>${formatWholeNumber(row.registrations)}</td>
+          <td>${formatMetricValue(row.cpr)}</td>
+        </tr>
+      `;
+    }
+
+    function createEmptyOverviewSvg(title) {
+      return `
+        <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(title)} empty state">
+          <rect width="720" height="280" rx="18" fill="#ffffff" />
+          <text x="360" y="142" text-anchor="middle" fill="#53635a" font-size="18" font-family="${escapeHtml(uiFont)}">Upload both workbooks</text>
+        </svg>
+      `;
+    }
+
+    function createSpendDistributionSvg(entries) {
+      const grouped = buildSpendDistributionRows(entries).slice(0, 7);
+      const width = 820;
+      const height = 320;
+      const left = 108;
+      const right = 78;
+      const top = 30;
+      const rowHeight = 40;
+      const maxSpend = Math.max(1, ...grouped.map((row) => row.spend));
+      const chartWidth = width - left - right;
+      const palette = ["#9fe870", "#00b9ff", "#ff9eb5", "#ffb020", "#7c5cff", "#2f6b1f", "#0066ff"];
+
+      const bars = grouped.map((row, index) => {
+        const y = top + index * rowHeight;
+        const barWidth = Math.max(3, (row.spend / maxSpend) * chartWidth);
+        const fill = palette[index % palette.length];
+        return `
+          <text x="${left - 12}" y="${y + 23}" text-anchor="end" fill="#53635a" font-size="14" font-weight="760">${escapeHtml(row.label)}</text>
+          <rect x="${left}" y="${y + 5}" width="${roundSvg(barWidth)}" height="28" rx="7" fill="${fill}" />
+          <text x="${roundSvg(Math.min(width - 12, left + barWidth + 9))}" y="${y + 24}" fill="#163300" font-size="13" font-weight="850">${escapeHtml(formatCompactMoney(row.spend))}</text>
+        `;
+      }).join("");
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spend distribution by publisher">
+          <rect width="${width}" height="${height}" rx="18" fill="#ffffff" />
+          <g font-family="${escapeHtml(uiFont)}">
+            <text x="${left}" y="20" fill="#53635a" font-size="13" font-weight="850">SPEND</text>
+            ${bars}
+          </g>
+        </svg>
+      `;
+    }
+
+    function buildSpendDistributionRows(entries) {
+      const groups = new Map();
+      for (const entry of entries) {
+        const selection = aggregateSelection([entry]);
+        const info = parseMatchKey(entry.key);
+        const label = formatPublisherLabel(info.publisher || "na");
+        groups.set(label, (groups.get(label) || 0) + selection.ttdTotals.spend);
+      }
+      return [...groups.entries()]
+        .map(([label, spend]) => ({ label, spend }))
+        .sort((a, b) => b.spend - a.spend);
+    }
+
+    function createDailyPerformanceSvg(selection, source) {
+      const days = source === "adalyzer" ? selection.adalyzerDays : selection.ttdDays;
+      const points = [...days.entries()]
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, totals]) => ({ date, spend: totals.spend, users: totals.users, registrations: totals.registrations }));
+      const width = 900;
+      const height = 320;
+      const bounds = { left: 68, right: width - 60, top: 34, bottom: height - 46 };
+      bounds.width = bounds.right - bounds.left;
+      bounds.height = bounds.bottom - bounds.top;
+      const maxSpend = getNiceMax(Math.max(0, ...points.map((point) => point.spend)));
+      const maxUsers = getNiceMax(Math.max(0, ...points.map((point) => point.users)));
+      const maxRegistrations = getNiceMax(Math.max(0, ...points.map((point) => point.registrations)));
+      const spendPath = createDualAxisSvgPath(points, bounds, "spend", 0, maxSpend);
+      const usersPath = createDualAxisSvgPath(points, bounds, "users", 0, maxUsers);
+      const registrationsPath = createDualAxisSvgPath(points, bounds, "registrations", 0, maxRegistrations);
+      const labelIndexes = getLabelIndexes(points.length, 7);
+      const labels = labelIndexes.map((index) => {
+        const point = points[index];
+        const x = xForIndex(bounds, index, points.length);
+        return `<text x="${roundSvg(x)}" y="${bounds.bottom + 25}" text-anchor="middle" fill="#53635a" font-size="12">${escapeHtml(formatShortDate(point.date))}</text>`;
+      }).join("");
+      const grid = [];
+      for (let i = 0; i <= 4; i += 1) {
+        const y = bounds.top + (bounds.height * i) / 4;
+        const spendValue = maxSpend * (4 - i) / 4;
+        const usersValue = maxUsers * (4 - i) / 4;
+        grid.push(`
+          <line x1="${bounds.left}" y1="${roundSvg(y)}" x2="${bounds.right}" y2="${roundSvg(y)}" stroke="#e2e8e4" />
+          <text x="${bounds.left - 9}" y="${roundSvg(y + 4)}" text-anchor="end" fill="#53635a" font-size="12">${escapeHtml(formatCompactMoney(spendValue))}</text>
+          <text x="${bounds.right + 9}" y="${roundSvg(y + 4)}" text-anchor="start" fill="#53635a" font-size="12">${escapeHtml(compactFormatter.format(usersValue))}</text>
+        `);
+      }
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Daily spend visits and registrations trend">
+          <rect width="${width}" height="${height}" rx="18" fill="#ffffff" />
+          <g font-family="${escapeHtml(uiFont)}">
+            ${grid.join("")}
+            <path d="${spendPath}" fill="none" stroke="#00b9ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="${usersPath}" fill="none" stroke="#9fe870" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="${registrationsPath}" fill="none" stroke="#ff9eb5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            ${labels}
+            <line x1="${bounds.right - 285}" y1="20" x2="${bounds.right - 260}" y2="20" stroke="#00b9ff" stroke-width="4" />
+            <text x="${bounds.right - 252}" y="24" fill="#53635a" font-size="13" font-weight="700">SPEND</text>
+            <line x1="${bounds.right - 190}" y1="20" x2="${bounds.right - 165}" y2="20" stroke="#9fe870" stroke-width="4" />
+            <text x="${bounds.right - 157}" y="24" fill="#53635a" font-size="13" font-weight="700">VISITS</text>
+            <line x1="${bounds.right - 103}" y1="20" x2="${bounds.right - 78}" y2="20" stroke="#ff9eb5" stroke-width="4" />
+            <text x="${bounds.right - 70}" y="24" fill="#53635a" font-size="13" font-weight="700">REGS</text>
+          </g>
+        </svg>
+      `;
+    }
+
+    function createDualAxisSvgPath(points, bounds, key, yMin, yMax) {
+      const commands = [];
+      points.forEach((point, index) => {
+        const value = point[key];
+        const x = xForIndex(bounds, index, points.length);
+        const y = yForValue(bounds, value, yMin, yMax);
+        commands.push(`${index === 0 ? "M" : "L"} ${roundSvg(x)} ${roundSvg(y)}`);
+      });
+      return commands.join(" ");
+    }
+
+    function formatCompactMoney(value) {
+      if (!Number.isFinite(value)) {
+        return "-";
+      }
+      return `$${compactFormatter.format(value)}`;
+    }
+
+    function renderComparisonTable() {
+      els.comparisonModes.forEach((button) => {
+        const isActive = button.dataset.comparisonMode === state.selectedComparisonMode;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+      });
+
+      if (!state.plot || !state.plot.points.length) {
+        const message = state.adalyzer && state.ttd
+          ? "No comparison rows for the selected period."
+          : "Upload both workbooks to populate the comparison.";
+        setComparisonEmpty(message);
+        els.comparisonMeta.textContent = state.adalyzer && state.ttd
+          ? "Pick a period where both uploaded files have data."
+          : "Upload both workbooks to compare Adalyzer and TTD.";
+        return;
+      }
+
+      const rows = buildComparisonRows(state.selectedComparisonMode);
+      if (!rows.length) {
+        setComparisonEmpty("No comparison rows for this selection.");
+        els.comparisonMeta.textContent = `${state.plot.selectedLabel} has no rows in this view.`;
+        return;
+      }
+
+      els.comparisonMeta.textContent = `${getComparisonModeLabel(state.selectedComparisonMode)} comparison for ${state.plot.selectedLabel}`;
+      els.comparisonBody.innerHTML = "";
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+        appendCell(tr, row.period, "text");
+        appendCell(tr, moneyFormatter.format(row.ttd.spend), "number");
+        appendCell(tr, formatWholeNumber(row.adalyzer.impressions), "number");
+        appendCell(tr, formatWholeNumber(row.ttd.impressions), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPM.adalyzer), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPM.ttd), "number");
+        appendDifferenceCell(tr, row.metrics.CPM.diff);
+        appendCell(tr, formatWholeNumber(row.adalyzer.users), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPV.adalyzer), "number");
+        appendCell(tr, formatWholeNumber(row.ttd.users), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPV.ttd), "number");
+        appendDifferenceCell(tr, row.metrics.CPV.diff);
+        appendCell(tr, formatWholeNumber(row.adalyzer.registrations), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPR.adalyzer), "number");
+        appendCell(tr, formatWholeNumber(row.ttd.registrations), "number");
+        appendCell(tr, formatMetricValue(row.metrics.CPR.ttd), "number");
+        appendDifferenceCell(tr, row.metrics.CPR.diff);
+        els.comparisonBody.appendChild(tr);
+      }
+    }
+
+    function buildComparisonRows(mode) {
+      if (mode === "overall") {
+        return [
+          createComparisonRow("Overall", state.plot.totals, state.plot.ttdTotals)
+        ];
+      }
+
+      if (mode === "weekly") {
+        const weeks = new Map();
+        for (const point of state.plot.points) {
+          if (!hasAnyTotals(point.adalyzer) && !hasAnyTotals(point.ttd)) {
+            continue;
+          }
+          const weekStart = getWeekStartKey(point.date);
+          if (!weeks.has(weekStart)) {
+            weeks.set(weekStart, {
+              start: weekStart,
+              end: addDaysToKey(weekStart, 6),
+              adalyzer: createTotals(),
+              ttd: createTotals()
+            });
+          }
+          const week = weeks.get(weekStart);
+          addTotals(week.adalyzer, point.adalyzer);
+          addTotals(week.ttd, point.ttd);
+        }
+        return [...weeks.values()]
+          .sort((a, b) => a.start.localeCompare(b.start))
+          .map((week) => createComparisonRow(`${formatShortDate(week.start)} - ${formatShortDate(week.end)}`, week.adalyzer, week.ttd));
+      }
+
+      return state.plot.points
+        .filter((point) => hasAnyTotals(point.adalyzer) || hasAnyTotals(point.ttd))
+        .map((point) => createComparisonRow(formatLongDate(point.date), point.adalyzer, point.ttd));
+    }
+
+    function createComparisonRow(period, adalyzer, ttd) {
+      return {
+        period,
+        adalyzer,
+        ttd,
+        metrics: {
+          CPM: createMetricComparison(adalyzer, ttd, metricDefinitions.CPM),
+          CPV: createMetricComparison(adalyzer, ttd, metricDefinitions.CPV),
+          CPR: createMetricComparison(adalyzer, ttd, metricDefinitions.CPR)
+        }
+      };
+    }
+
+    function createMetricComparison(adalyzer, ttd, metric) {
+      const adalyzerValue = calculateMetricIfAvailable(adalyzer, metric);
+      const ttdValue = calculateMetricIfAvailable(ttd, metric);
+      return {
+        adalyzer: adalyzerValue,
+        ttd: ttdValue,
+        diff: calculateMetricDifferencePercent(adalyzerValue, ttdValue)
+      };
+    }
+
+    function calculateMetricIfAvailable(row, metric) {
+      const denominator = row[metric.denominator];
+      if (!denominator || denominator <= 0) {
+        return NaN;
+      }
+      return (row.spend / denominator) * metric.factor;
+    }
+
+    function hasAnyTotals(row) {
+      return Boolean(row && (
+        row.spend
+        || row.impressions
+        || row.users
+        || row.visits
+        || row.registrations
+      ));
+    }
+
+    function setComparisonEmpty(message) {
+      els.comparisonBody.innerHTML = "";
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.className = "empty-row";
+      td.colSpan = 17;
+      td.textContent = message;
+      tr.appendChild(td);
+      els.comparisonBody.appendChild(tr);
+    }
+
+    function appendCell(row, text, kind) {
+      const cell = document.createElement("td");
+      cell.textContent = text;
+      if (kind === "text") {
+        cell.style.textAlign = "left";
+      }
+      row.appendChild(cell);
+      return cell;
+    }
+
+    function appendDifferenceCell(row, value) {
+      const cell = appendCell(row, formatMetricDifferencePercent(value), "number");
+      if (Number.isFinite(value) && value > 0) {
+        cell.className = "diff-positive";
+      } else if (Number.isFinite(value) && value < 0) {
+        cell.className = "diff-negative";
+      }
+      return cell;
+    }
+
+    function calculateMetricDifferencePercent(adalyzerValue, ttdValue) {
+      if (!Number.isFinite(adalyzerValue) || !Number.isFinite(ttdValue) || ttdValue === 0) {
+        return NaN;
+      }
+      return ((adalyzerValue - ttdValue) / Math.abs(ttdValue)) * 100;
+    }
+
+    function formatMetricDifferencePercent(value) {
+      if (!Number.isFinite(value)) {
+        return "-";
+      }
+      const formatted = `${percentFormatter.format(value)}%`;
+      return value > 0 ? `+${formatted}` : formatted;
+    }
+
+    function formatWholeNumber(value) {
+      return Number.isFinite(value) ? numberFormatter.format(value) : "-";
+    }
+
+    function getComparisonModeLabel(mode) {
+      if (mode === "weekly") return "Weekly";
+      if (mode === "overall") return "Overall";
+      return "Daily";
+    }
+
+    function getWeekStartKey(dateKey) {
+      const date = parseDateKey(dateKey);
+      date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+      return toDateKey(date);
+    }
+
+    function addDaysToKey(dateKey, days) {
+      const date = parseDateKey(dateKey);
+      date.setUTCDate(date.getUTCDate() + days);
+      return toDateKey(date);
+    }
+
+    function buildPdfReport() {
+      const entries = filterEntries(getMatchedEntries(), "all");
+      if (!entries.length) {
+        return false;
+      }
+
+      const selection = aggregateSelection(entries);
+      const metrics = ["CPM", "CPV", "CPR"];
+      els.pdfReport.innerHTML = [
+        createOverallReportPageHtml("adalyzer", entries, selection),
+        createOverallReportPageHtml("ttd", entries, selection),
+        ...metrics.map((metricKey) => createReportPageHtml(metricKey, entries, selection))
+      ].join("");
+      return true;
+    }
+
+    function createOverallReportPageHtml(source, entries, selection) {
+      const sourceLabel = source === "adalyzer" ? "Adalyzer" : "TTD";
+      const totals = createOverallTotalsRow(selection, source);
+      const rows = buildOverallPerformanceRows(entries, source);
+
+      return `
+        <article class="report-page report-page-overall">
+          <header class="report-header">
+            <div class="report-title-pill">
+              <h2 class="report-title">${sourceLabel}<br>Performance</h2>
+            </div>
+            <div class="report-kpi-row report-overall-kpis">
+              <div class="report-kpi"><span>Spend</span><strong>${moneyFormatter.format(selection.ttdTotals.spend)}</strong></div>
+              <div class="report-kpi"><span>CPM</span><strong>${formatMetricValue(totals.cpm)}</strong></div>
+              <div class="report-kpi"><span>CPV</span><strong>${formatMetricValue(totals.cpv)}</strong></div>
+              <div class="report-kpi"><span>CPR</span><strong>${formatMetricValue(totals.cpr)}</strong></div>
+            </div>
+          </header>
+          ${createOverallReportTopHtml(source, entries, selection)}
+          <section class="report-overall-table-card">
+            <h3 class="report-section-title">${sourceLabel} line item performance</h3>
+            <table class="report-table report-overall-table">
+              <thead>
+                <tr>
+                  <th>Ad group</th>
+                  <th>Spend</th>
+                  <th>Impressions</th>
+                  <th>CPM</th>
+                  <th>${source === "adalyzer" ? "Users" : "Visits"}</th>
+                  <th>CPV</th>
+                  <th>Registrations</th>
+                  <th>CPR</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map((row) => renderOverallPerformanceRow(row)).join("")}
+              </tbody>
+              <tfoot>
+                ${renderOverallPerformanceRow(totals, "TOTAL")}
+              </tfoot>
+            </table>
+            <p class="report-note">Spend is shared across Adalyzer and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyzer delivery fields" : "TTD conversion fields"}.</p>
+          </section>
+        </article>
+      `;
+    }
+
+    function createOverallReportTopHtml(source, entries, selection) {
+      if (source === "adalyzer") {
+        const insights = buildOverallPerformanceInsights(source, entries, selection);
+        return `
+          <div class="report-overall-visuals with-insights">
+            <section class="report-overall-chart">
+              <h3 class="report-section-title">Daily performance trend</h3>
+              ${createDailyPerformanceSvg(selection, "adalyzer")}
+            </section>
+            <aside class="report-overall-insights">
+              <section class="report-insight-panel primary">
+                <div class="report-panel-title">Performance</div>
+                ${renderReportInsightBlocks(insights.slice(0, 2))}
+              </section>
+              <section class="report-insight-panel secondary">
+                <div class="report-panel-title">Breakdowns</div>
+                ${renderReportInsightBlocks(insights.slice(2))}
+              </section>
+            </aside>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="report-overall-visuals">
+          <section class="report-overall-chart">
+            <h3 class="report-section-title">Spend distribution</h3>
+            ${createSpendDistributionSvg(entries)}
+          </section>
+          <section class="report-overall-chart">
+            <h3 class="report-section-title">Daily performance trend</h3>
+            ${createDailyPerformanceSvg(selection, "ttd")}
+          </section>
+        </div>
+      `;
+    }
+
+    function createReportPageHtml(metricKey, entries, selection) {
+      const metric = metricDefinitions[metricKey];
+      const series = buildComparisonSeries(selection, metric);
+      const chartSvg = createReportChartSvg(metricKey, series);
+      const adMetric = calculateMetric(selection.adalyzerTotals, metric);
+      const ttdMetric = calculateMetric(selection.ttdTotals, metric);
+      const diff = calculateMetricDifferencePercent(adMetric, ttdMetric);
+      const rows = buildAdGroupReportRows(entries, metricKey);
+      const insights = buildReportInsights(entries, selection, metricKey);
+      const tableColumns = getReportTableColumns(metricKey);
+
+      return `
+        <article class="report-page">
+          <header class="report-header">
+            <div class="report-title-pill">
+              <h2 class="report-title">Adalyzer vs. TTD ${metricKey}<br>Data Comparison</h2>
+            </div>
+            <div class="report-kpi-row">
+              <div class="report-kpi"><span>A ${metricKey}</span><strong>${formatMetricValue(adMetric)}</strong></div>
+              <div class="report-kpi"><span>TTD ${metricKey}</span><strong>${formatMetricValue(ttdMetric)}</strong></div>
+              <div class="report-kpi"><span>Diff</span><strong>${formatMetricDifferencePercent(diff)}</strong></div>
+            </div>
+          </header>
+          <div class="report-chart" role="img" aria-label="${metricKey} line graph for all ad groups">${chartSvg}</div>
+          <div class="report-bottom">
+            <section class="report-table-card">
+              <h3 class="report-section-title">Ad group split</h3>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Ad group</th>
+                    ${tableColumns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows.map((row) => `
+                    <tr>
+                      <td>${escapeHtml(row.label)}</td>
+                      ${renderReportTableCells(row, tableColumns)}
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+              <p class="report-note">Overall campaign period by ad group. Spend is shared for all cost calculations.</p>
+            </section>
+            <aside class="report-insights">
+              <section class="report-insight-panel primary">
+                <div class="report-panel-title">Performance</div>
+                ${renderReportInsightBlocks(insights.slice(0, 3))}
+              </section>
+              <section class="report-insight-panel secondary">
+                <div class="report-panel-title">Breakdowns</div>
+                ${renderReportInsightBlocks(insights.slice(3))}
+              </section>
+            </aside>
+          </div>
+        </article>
+      `;
+    }
+
+    function getReportTableColumns(metricKey) {
+      if (metricKey === "CPM") {
+        return [
+          { label: "A CPM", value: (row) => formatMetricValue(row.metrics.CPM.adalyzer) },
+          { label: "TTD CPM", value: (row) => formatMetricValue(row.metrics.CPM.ttd) },
+          { label: "Difference", value: (row) => formatMetricDifferencePercent(row.metrics.CPM.diff), className: (row) => getReportDiffClass(row.metrics.CPM.diff) }
+        ];
+      }
+
+      if (metricKey === "CPV") {
+        return [
+          { label: "A visits", value: (row) => formatWholeNumber(row.adalyzer.users) },
+          { label: "A CPV", value: (row) => formatMetricValue(row.metrics.CPV.adalyzer) },
+          { label: "TTD visits", value: (row) => formatWholeNumber(row.ttd.users) },
+          { label: "TTD CPV", value: (row) => formatMetricValue(row.metrics.CPV.ttd) },
+          { label: "Difference", value: (row) => formatMetricDifferencePercent(row.metrics.CPV.diff), className: (row) => getReportDiffClass(row.metrics.CPV.diff) }
+        ];
+      }
+
+      return [
+        { label: "A registrations", value: (row) => formatWholeNumber(row.adalyzer.registrations) },
+        { label: "A CPR", value: (row) => formatMetricValue(row.metrics.CPR.adalyzer) },
+        { label: "TTD registrations", value: (row) => formatWholeNumber(row.ttd.registrations) },
+        { label: "TTD CPR", value: (row) => formatMetricValue(row.metrics.CPR.ttd) },
+        { label: "Difference", value: (row) => formatMetricDifferencePercent(row.metrics.CPR.diff), className: (row) => getReportDiffClass(row.metrics.CPR.diff) }
+      ];
+    }
+
+    function renderReportTableCells(row, columns) {
+      return columns
+        .map((column) => {
+          const className = column.className ? column.className(row) : "";
+          const classAttribute = className ? ` class="${className}"` : "";
+          return `<td${classAttribute}>${escapeHtml(column.value(row))}</td>`;
+        })
+        .join("");
+    }
+
+    function getReportDiffClass(value) {
+      if (!Number.isFinite(value)) return "";
+      return value > 0 ? "report-diff-positive" : value < 0 ? "report-diff-negative" : "";
+    }
+
+    function renderReportInsightBlocks(insights) {
+      return insights.map((insight) => `
+        <div class="report-panel-block">
+          <h4>${escapeHtml(insight.title)}</h4>
+          ${insight.items
+            ? `<ul>${insight.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+            : `<p>${escapeHtml(insight.body)}</p>`}
+        </div>
+      `).join("");
+    }
+
+    function createReportChartSvg(metricKey, points) {
+      const width = 1500;
+      const height = 300;
+      const bounds = { left: 74, right: width - 28, top: 36, bottom: height - 48 };
+      bounds.width = bounds.right - bounds.left;
+      bounds.height = bounds.bottom - bounds.top;
+      const values = points.flatMap((point) => [point.adalyzerValue, point.ttdValue]).filter((value) => Number.isFinite(value));
+      const yMin = 0;
+      const yMax = getNiceMax(Math.max(0, ...values));
+      const labelIndexes = getLabelIndexes(points.length, 8);
+      const adalyzerPath = createReportSvgPath(points, bounds, yMin, yMax, "adalyzerValue");
+      const ttdPath = createReportSvgPath(points, bounds, yMin, yMax, "ttdValue");
+      const grid = [];
+      for (let i = 0; i <= 4; i += 1) {
+        const value = yMin + ((yMax - yMin) * (4 - i)) / 4;
+        const y = bounds.top + (bounds.height * i) / 4;
+        grid.push(`
+          <line x1="${bounds.left}" y1="${roundSvg(y)}" x2="${bounds.right}" y2="${roundSvg(y)}" stroke="#d6e0d3" stroke-width="1" />
+          <text x="${bounds.left - 12}" y="${roundSvg(y + 4)}" text-anchor="end" fill="#53635a" font-size="17">${escapeHtml(formatAxisValue(value))}</text>
+        `);
+      }
+
+      const labels = labelIndexes.map((index) => {
+        const point = points[index];
+        const x = xForIndex(bounds, index, points.length);
+        return `<text x="${roundSvg(x)}" y="${bounds.bottom + 30}" text-anchor="middle" fill="#53635a" font-size="16">${escapeHtml(formatShortDate(point.date))}</text>`;
+      }).join("");
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="${width}" height="${height}" fill="#ffffff" />
+          <text x="${bounds.left}" y="24" fill="#163300" font-size="20" font-weight="790">${escapeHtml(metricKey)} daily trend</text>
+          <g font-family="${escapeHtml(uiFont)}">${grid.join("")}</g>
+          <line x1="${bounds.left}" y1="${bounds.bottom}" x2="${bounds.right}" y2="${bounds.bottom}" stroke="#9fb29f" stroke-width="1.4" />
+          <g font-family="${escapeHtml(uiFont)}">${labels}</g>
+          <path d="${adalyzerPath}" fill="none" stroke="${lineStyles.adalyzer.color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="${ttdPath}" fill="none" stroke="${lineStyles.ttd.color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+          <g font-family="${escapeHtml(uiFont)}" font-size="17" font-weight="700" fill="#163300">
+            <line x1="${bounds.right - 248}" y1="22" x2="${bounds.right - 220}" y2="22" stroke="${lineStyles.adalyzer.color}" stroke-width="5" stroke-linecap="round" />
+            <text x="${bounds.right - 211}" y="27">Adalyzer</text>
+            <line x1="${bounds.right - 112}" y1="22" x2="${bounds.right - 84}" y2="22" stroke="${lineStyles.ttd.color}" stroke-width="5" stroke-linecap="round" />
+            <text x="${bounds.right - 75}" y="27">TTD</text>
+          </g>
+        </svg>
+      `;
+    }
+
+    function createReportSvgPath(points, bounds, yMin, yMax, valueKey) {
+      const commands = [];
+      let started = false;
+      points.forEach((point, index) => {
+        const value = point[valueKey];
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        const x = xForIndex(bounds, index, points.length);
+        const y = yForValue(bounds, value, yMin, yMax);
+        if (!started) {
+          commands.push(`M ${roundSvg(x)} ${roundSvg(y)}`);
+          started = true;
+        } else {
+          commands.push(`L ${roundSvg(x)} ${roundSvg(y)}`);
+        }
+      });
+      return commands.join(" ");
+    }
+
+    function roundSvg(value) {
+      return Math.round(value * 10) / 10;
+    }
+
+    function buildAdGroupReportRows(entries, metricKey) {
+      return entries.map((entry) => {
+        const selection = aggregateSelection([entry]);
+        const row = createComparisonRow(entry.label, selection.adalyzerTotals, selection.ttdTotals);
+        return {
+          ...row,
+          label: entry.label,
+          denominator: getReportDenominator(selection, metricKey)
+        };
+      }).sort((a, b) => {
+        const aValue = a.metrics[metricKey].ttd;
+        const bValue = b.metrics[metricKey].ttd;
+        if (Number.isFinite(aValue) && Number.isFinite(bValue)) {
+          return aValue - bValue;
+        }
+        return a.label.localeCompare(b.label, "en-AU");
+      });
+    }
+
+    function getReportDenominator(selection, metricKey) {
+      if (metricKey === "CPM") return selection.ttdTotals.impressions;
+      if (metricKey === "CPV") return selection.ttdTotals.users;
+      return selection.ttdTotals.registrations;
+    }
+
+    function getReportDenominatorLabel(metricKey) {
+      if (metricKey === "CPM") return "TTD Impr.";
+      if (metricKey === "CPV") return "TTD Visits";
+      return "TTD Regs";
+    }
+
+    function buildReportInsights(entries, selection, metricKey) {
+      const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
+        .filter((row) => row.key !== "na" && row.key !== "unknown");
+      const audienceRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).audience, formatAudienceLabel);
+      const regionRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).region, formatRegionLabel);
+      const bestPublisher = getBestRow(publisherRows, "CPR");
+      const worstPublisher = getWorstRow(publisherRows, "CPR");
+      const koa = audienceRows.find((row) => row.key === "koa");
+      const lal = audienceRows.find((row) => row.key === "lal");
+      const performance = audienceRows.find((row) => row.key === "performance");
+      const per = audienceRows.find((row) => row.key === "per");
+      const capitals = regionRows.find((row) => row.key === "capitals");
+      const ros = regionRows.find((row) => row.key === "roa");
+      const anomaly = entries.find((entry) => {
+        const info = parseMatchKey(entry.key);
+        const group = state.ttd.groupsByKey.get(entry.key);
+        return info.publisher === "9now"
+          && info.audience === "lal"
+          && info.region === "roa"
+          && group
+          && group.totals.spend > 0
+          && group.totals.registrations === 0;
+      });
+      const ttdCpr = calculateMetric(selection.ttdTotals, metricDefinitions.CPR);
+      const metricComparison = createMetricComparison(selection.adalyzerTotals, selection.ttdTotals, metricDefinitions[metricKey]);
+
+      return [
+        {
+          title: `${metricKey} readout`,
+          body: `All ad groups are tracking at ${formatMetricValue(metricComparison.ttd)} on TTD versus ${formatMetricValue(metricComparison.adalyzer)} on Adalyzer, a ${formatMetricDifferencePercent(metricComparison.diff)} difference.`
+        },
+        {
+          title: "Overall performance",
+          body: `We have delivered ${formatWholeNumber(selection.ttdTotals.registrations)} total registrations with an overall campaign CPR of ${formatMetricValue(ttdCpr)}. Aside from ${anomaly ? `the missing 9Now - LAL - ROS registrations despite logged spend` : `minor tracking differences`}, performance across the board is moving in the right direction.`
+        },
+        {
+          title: "Publisher view",
+          body: `${bestPublisher ? `${bestPublisher.label} is currently the most cost-efficient publisher at ${formatMetricValue(bestPublisher.metrics.CPR.ttd)} CPR with ${formatWholeNumber(bestPublisher.ttd.registrations)} registrations.` : ""} ${worstPublisher ? `${worstPublisher.label} is the highest-cost publisher at ${formatMetricValue(worstPublisher.metrics.CPR.ttd)} CPR.` : ""} ${anomaly ? "I am investigating the 9Now - LAL - ROS tracking discrepancy." : ""}`.trim()
+        },
+        {
+          title: "Targeting strategy",
+          items: [
+            performance ? `Performance+ is delivering ${formatMetricValue(performance.metrics.CPR.ttd)} CPR across ${formatWholeNumber(performance.ttd.registrations)} registrations.` : "",
+            per ? `Player Event Retargeting is delivering ${formatMetricValue(per.metrics.CPR.ttd)} CPR across ${formatWholeNumber(per.ttd.registrations)} registrations.` : "",
+            koa && lal ? `KOA (${formatMetricValue(koa.metrics.CPR.ttd)} CPR) and LAL (${formatMetricValue(lal.metrics.CPR.ttd)} CPR) generated a combined ${formatWholeNumber(koa.ttd.registrations + lal.ttd.registrations)} registrations.` : ""
+          ].filter(Boolean)
+        },
+        {
+          title: "Market breakdown",
+          body: capitals && ros
+            ? `Capitals is tracking at ${formatMetricValue(capitals.metrics.CPR.ttd)} CPR across ${formatWholeNumber(capitals.ttd.registrations)} registrations, while ROS is tracking at ${formatMetricValue(ros.metrics.CPR.ttd)} CPR across ${formatWholeNumber(ros.ttd.registrations)} registrations.`
+            : "Market split is available once Capitals and ROS rows are present."
+        }
+      ];
+    }
+
+    function buildOverallPerformanceInsights(source, entries, selection) {
+      const sourceLabel = source === "adalyzer" ? "Adalyzer" : "TTD";
+      const totals = createOverallTotalsRow(selection, source);
+      const deliveryLabel = source === "adalyzer" ? "users" : "visits";
+      const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
+        .filter((row) => row.key !== "na" && row.key !== "unknown");
+      const audienceRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).audience, formatAudienceLabel);
+      const regionRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).region, formatRegionLabel);
+      const bestPublisher = getBestSourceRow(publisherRows, "CPR", source);
+      const worstPublisher = getWorstSourceRow(publisherRows, "CPR", source);
+      const koa = audienceRows.find((row) => row.key === "koa");
+      const lal = audienceRows.find((row) => row.key === "lal");
+      const capitals = regionRows.find((row) => row.key === "capitals");
+      const ros = regionRows.find((row) => row.key === "roa");
+
+      return [
+        {
+          title: "Overall readout",
+          body: `${sourceLabel} delivered ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(totals.cpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
+        },
+        {
+          title: "Scale",
+          body: `The matched campaign view covers ${formatWholeNumber(entries.length)} ad groups with ${moneyFormatter.format(selection.ttdTotals.spend)} total spend. Spend is shared across both measurement views for cost calculations.`
+        },
+        {
+          title: "Publisher view",
+          body: `${bestPublisher ? `${bestPublisher.label} is the most efficient publisher at ${formatMetricValue(getSourceMetric(bestPublisher, "CPR", source))} CPR.` : ""} ${worstPublisher ? `${worstPublisher.label} is the highest-cost publisher at ${formatMetricValue(getSourceMetric(worstPublisher, "CPR", source))} CPR.` : ""}`.trim() || "Publisher-level efficiency will populate once matched publisher rows are available."
+        },
+        {
+          title: "Targeting and market",
+          items: [
+            koa && lal ? `KOA is tracking at ${formatMetricValue(getSourceMetric(koa, "CPR", source))} CPR, while LAL is tracking at ${formatMetricValue(getSourceMetric(lal, "CPR", source))} CPR.` : "",
+            capitals && ros ? `Capitals is tracking at ${formatMetricValue(getSourceMetric(capitals, "CPR", source))} CPR versus ROS at ${formatMetricValue(getSourceMetric(ros, "CPR", source))} CPR.` : ""
+          ].filter(Boolean)
+        }
+      ];
+    }
+
+    function getSourceMetric(row, metricKey, source) {
+      return row.metrics[metricKey][source];
+    }
+
+    function getBestSourceRow(rows, metricKey, source) {
+      return rows
+        .filter((row) => Number.isFinite(getSourceMetric(row, metricKey, source)) && row[source].registrations > 0)
+        .sort((a, b) => getSourceMetric(a, metricKey, source) - getSourceMetric(b, metricKey, source))[0] || null;
+    }
+
+    function getWorstSourceRow(rows, metricKey, source) {
+      return rows
+        .filter((row) => Number.isFinite(getSourceMetric(row, metricKey, source)) && row[source].spend > 0)
+        .sort((a, b) => getSourceMetric(b, metricKey, source) - getSourceMetric(a, metricKey, source))[0] || null;
+    }
+
+    function buildGroupedReportRows(entries, getKey, formatLabel) {
+      const groups = new Map();
+      for (const entry of entries) {
+        const key = getKey(entry) || "unknown";
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key).push(entry);
+      }
+      return [...groups.entries()].map(([key, groupEntries]) => {
+        const selection = aggregateSelection(groupEntries);
+        return {
+          key,
+          label: formatLabel(key),
+          ...createComparisonRow(formatLabel(key), selection.adalyzerTotals, selection.ttdTotals)
+        };
+      });
+    }
+
+    function getBestRow(rows, metricKey) {
+      return rows
+        .filter((row) => Number.isFinite(row.metrics[metricKey].ttd) && row.ttd.registrations > 0)
+        .sort((a, b) => a.metrics[metricKey].ttd - b.metrics[metricKey].ttd)[0] || null;
+    }
+
+    function getWorstRow(rows, metricKey) {
+      return rows
+        .filter((row) => Number.isFinite(row.metrics[metricKey].ttd) && row.ttd.spend > 0)
+        .sort((a, b) => b.metrics[metricKey].ttd - a.metrics[metricKey].ttd)[0] || null;
+    }
+
+    function formatPublisherLabel(key) {
+      return {
+        "10play": "10Play",
+        "7plus": "7Plus",
+        "9now": "9Now",
+        samsung: "Samsung",
+        sbs: "SBS",
+        na: "Other"
+      }[key] || key || "Other";
+    }
+
+    function formatAudienceLabel(key) {
+      return {
+        koa: "KOA",
+        lal: "LAL",
+        per: "Player Event Retargeting",
+        performance: "Performance+"
+      }[key] || key || "Other";
+    }
+
+    function formatRegionLabel(key) {
+      return {
+        capitals: "Capitals",
+        roa: "ROS"
+      }[key] || key || "Other";
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function setLoading(isLoading, copy = "Reading workbook", progress = 0) {
+      els.loading.classList.toggle("is-visible", isLoading);
+      els.progressCopy.textContent = copy;
+      els.progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    }
+
+    function showNotice(message, isError) {
+      els.notice.textContent = message;
+      els.notice.classList.toggle("is-visible", Boolean(message));
+      els.notice.classList.toggle("error", Boolean(isError));
+    }
+
+    function clearNotice() {
+      showNotice("", false);
+    }
+
+    function nextFrame() {
+      return new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+
+    function parseZip(buffer) {
+      const bytes = new Uint8Array(buffer);
+      const view = new DataView(buffer);
+      const eocdOffset = findEndOfCentralDirectory(view);
+      if (eocdOffset < 0) {
+        throw new Error("This file is not a readable XLSX archive.");
+      }
+
+      const entries = view.getUint16(eocdOffset + 10, true);
+      const centralDirectoryOffset = view.getUint32(eocdOffset + 16, true);
+      const decoder = new TextDecoder("utf-8");
+      const files = new Map();
+      let offset = centralDirectoryOffset;
+
+      for (let i = 0; i < entries; i += 1) {
+        const signature = view.getUint32(offset, true);
+        if (signature !== 0x02014b50) {
+          break;
+        }
+        const flags = view.getUint16(offset + 8, true);
+        const method = view.getUint16(offset + 10, true);
+        const compressedSize = view.getUint32(offset + 20, true);
+        const uncompressedSize = view.getUint32(offset + 24, true);
+        const nameLength = view.getUint16(offset + 28, true);
+        const extraLength = view.getUint16(offset + 30, true);
+        const commentLength = view.getUint16(offset + 32, true);
+        const localOffset = view.getUint32(offset + 42, true);
+        const name = decoder.decode(bytes.slice(offset + 46, offset + 46 + nameLength));
+
+        files.set(name, {
+          flags,
+          method,
+          compressedSize,
+          uncompressedSize,
+          localOffset
+        });
+        offset += 46 + nameLength + extraLength + commentLength;
+      }
+
+      return {
+        has(name) {
+          return files.has(name);
+        },
+        async read(name) {
+          const entry = files.get(name);
+          if (!entry) {
+            throw new Error(`Missing ${name} in the XLSX file.`);
+          }
+          if (entry.flags & 1) {
+            throw new Error("Encrypted XLSX files are not supported.");
+          }
+
+          const localSignature = view.getUint32(entry.localOffset, true);
+          if (localSignature !== 0x04034b50) {
+            throw new Error(`Invalid XLSX entry: ${name}.`);
+          }
+          const localNameLength = view.getUint16(entry.localOffset + 26, true);
+          const localExtraLength = view.getUint16(entry.localOffset + 28, true);
+          const dataStart = entry.localOffset + 30 + localNameLength + localExtraLength;
+          const compressed = bytes.slice(dataStart, dataStart + entry.compressedSize);
+
+          if (entry.method === 0) {
+            return compressed;
+          }
+          if (entry.method === 8) {
+            return inflateRaw(compressed);
+          }
+          throw new Error(`Unsupported XLSX compression method: ${entry.method}.`);
+        }
+      };
+    }
+
+    function findEndOfCentralDirectory(view) {
+      const minOffset = Math.max(0, view.byteLength - 22 - 65535);
+      for (let offset = view.byteLength - 22; offset >= minOffset; offset -= 1) {
+        if (view.getUint32(offset, true) === 0x06054b50) {
+          return offset;
+        }
+      }
+      return -1;
+    }
+
+    async function inflateRaw(bytes) {
+      if (!("DecompressionStream" in window)) {
+        throw new Error("This browser cannot decompress XLSX files. Use the latest Chrome or Edge.");
+      }
+
+      const formats = ["deflate-raw", "deflate"];
+      let lastError;
+      for (const format of formats) {
+        try {
+          const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+          const buffer = await new Response(stream).arrayBuffer();
+          return new Uint8Array(buffer);
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError || new Error("Could not decompress XLSX data.");
+    }
+
+    async function findFirstWorksheetPath(zip) {
+      if (!zip.has("xl/workbook.xml")) {
+        return "xl/worksheets/sheet1.xml";
+      }
+
+      const workbookXml = await readZipText(zip, "xl/workbook.xml");
+      const sheetMatch = workbookXml.match(/<sheet\b([^>]*)>/);
+      if (!sheetMatch) {
+        return "xl/worksheets/sheet1.xml";
+      }
+      const sheetAttrs = parseAttributes(sheetMatch[1]);
+      const relationshipId = sheetAttrs["r:id"] || sheetAttrs.id;
+      if (!relationshipId || !zip.has("xl/_rels/workbook.xml.rels")) {
+        return "xl/worksheets/sheet1.xml";
+      }
+
+      const relsXml = await readZipText(zip, "xl/_rels/workbook.xml.rels");
+      const relRegex = /<Relationship\b([^>]*)\/?>/g;
+      let relMatch;
+      while ((relMatch = relRegex.exec(relsXml))) {
+        const relAttrs = parseAttributes(relMatch[1]);
+        if (relAttrs.Id === relationshipId && relAttrs.Target) {
+          return normalizeZipPath("xl", relAttrs.Target);
+        }
+      }
+      return "xl/worksheets/sheet1.xml";
+    }
+
+    async function findWorksheetPathByName(zip, sheetNames) {
+      if (!zip.has("xl/workbook.xml") || !zip.has("xl/_rels/workbook.xml.rels")) {
+        return "";
+      }
+
+      const wanted = new Set(sheetNames.map((name) => normalizeHeader(name)));
+      const workbookXml = await readZipText(zip, "xl/workbook.xml");
+      const relsXml = await readZipText(zip, "xl/_rels/workbook.xml.rels");
+      const relMap = new Map();
+      const relRegex = /<Relationship\b([^>]*)\/?>/g;
+      let relMatch;
+      while ((relMatch = relRegex.exec(relsXml))) {
+        const relAttrs = parseAttributes(relMatch[1]);
+        if (relAttrs.Id && relAttrs.Target) {
+          relMap.set(relAttrs.Id, relAttrs.Target);
+        }
+      }
+
+      const sheetRegex = /<sheet\b([^>]*)\/?>/g;
+      let sheetMatch;
+      while ((sheetMatch = sheetRegex.exec(workbookXml))) {
+        const sheetAttrs = parseAttributes(sheetMatch[1]);
+        const name = sheetAttrs.name || "";
+        const relationshipId = sheetAttrs["r:id"] || sheetAttrs.id;
+        const target = relMap.get(relationshipId);
+        if (wanted.has(normalizeHeader(name)) && target) {
+          return normalizeZipPath("xl", target);
+        }
+      }
+      return "";
+    }
+
+    async function readSharedStrings(zip) {
+      if (!zip.has("xl/sharedStrings.xml")) {
+        return [];
+      }
+      const xml = await readZipText(zip, "xl/sharedStrings.xml");
+      const strings = [];
+      const stringRegex = /<si\b[^>]*>([\s\S]*?)<\/si>/g;
+      let match;
+      while ((match = stringRegex.exec(xml))) {
+        strings.push(extractRichText(match[1]));
+      }
+      return strings;
+    }
+
+    async function readZipText(zip, path) {
+      return new TextDecoder("utf-8").decode(await zip.read(path));
+    }
+
+    function normalizeZipPath(base, target) {
+      if (target.startsWith("/")) {
+        return target.replace(/^\//, "");
+      }
+      if (target.startsWith("xl/")) {
+        return target;
+      }
+      return `${base}/${target}`.replace(/\/\.\//g, "/");
+    }
+
+    function parseAttributes(text) {
+      const attrs = {};
+      text.replace(/([A-Za-z_:][\w:.-]*)="([^"]*)"/g, (_, key, value) => {
+        attrs[key] = decodeXml(value);
+        return "";
+      });
+      return attrs;
+    }
+
+    function extractRichText(xml) {
+      const parts = [];
+      const textRegex = /<t\b[^>]*>([\s\S]*?)<\/t>/g;
+      let match;
+      while ((match = textRegex.exec(xml))) {
+        parts.push(decodeXml(match[1]));
+      }
+      return parts.join("");
+    }
+
+    function decodeXml(value) {
+      return String(value || "")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, "\"")
+        .replace(/&apos;/g, "'")
+        .replace(/&amp;/g, "&")
+        .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCharCode(parseInt(code, 16)));
+    }
+
+    function columnIndex(reference) {
+      if (!reference) {
+        return null;
+      }
+      const match = String(reference).match(/^[A-Z]+/i);
+      if (!match) {
+        return null;
+      }
+      let index = 0;
+      for (const char of match[0].toUpperCase()) {
+        index = index * 26 + char.charCodeAt(0) - 64;
+      }
+      return index - 1;
+    }
+
+    function normalizeHeader(value) {
+      return cleanText(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function cleanText(value) {
+      return String(value || "").trim();
+    }
+
+    function parseNumber(value) {
+      const raw = cleanText(value);
+      if (!raw) {
+        return 0;
+      }
+      const normalized = raw.replace(/[$, ]/g, "");
+      const number = Number(normalized);
+      return Number.isFinite(number) ? number : 0;
+    }
+
+    function parseDateValue(value) {
+      const raw = cleanText(value);
+      if (!raw) {
+        return "";
+      }
+
+      const asNumber = Number(raw);
+      if (Number.isFinite(asNumber) && asNumber > 20000) {
+        const epoch = Date.UTC(1899, 11, 30);
+        return toDateKey(new Date(epoch + asNumber * 86400000));
+      }
+
+      const slash = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+      if (slash) {
+        const day = Number(slash[1]);
+        const month = Number(slash[2]);
+        const year = normalizeYear(Number(slash[3]));
+        return toDateKey(new Date(Date.UTC(year, month - 1, day)));
+      }
+
+      const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (iso) {
+        return toDateKey(new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))));
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return toDateKey(parsed);
+      }
+      return "";
+    }
+
+    function normalizeYear(year) {
+      return year < 100 ? 2000 + year : year;
+    }
+
+    function parseDateKey(dateKey) {
+      const [year, month, day] = dateKey.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, day));
+    }
+
+    function toDateKey(date) {
+      return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+        .toISOString()
+        .slice(0, 10);
+    }
+
+    function minDateKey(a, b) {
+      return a <= b ? a : b;
+    }
+
+    function maxDateKey(a, b) {
+      return a >= b ? a : b;
+    }
+
+    function formatShortDate(dateKey) {
+      return dateFormatter.format(parseDateKey(dateKey));
+    }
+
+    function formatLongDate(dateKey) {
+      return longDateFormatter.format(parseDateKey(dateKey));
+    }
+
+    updateMatchedControls();
+    drawChart();
+    if (new URLSearchParams(window.location.search).get("pdf") === "1") {
+      buildPdfReport();
+    }
+  </script>
+</body>
+</html>

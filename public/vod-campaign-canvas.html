@@ -2579,6 +2579,7 @@
         "9now": "9Now",
         samsung: "Samsung",
         sbs: "SBS",
+        sp500: "OM-SP500",
         na: "OM"
       };
       const audienceLabels = {
@@ -2591,6 +2592,12 @@
         capitals: "Capitals",
         roa: "ROA"
       };
+      if (publisher === "sp500") {
+        return [
+          publisherLabels[publisher],
+          regionLabels[region] || region || "Unknown"
+        ].join("-");
+      }
       return [
         publisherLabels[publisher] || publisher || "Unknown",
         audienceLabels[audience] || audience || "Unknown",
@@ -2613,6 +2620,7 @@
       if (compact.includes("9now")) return "9now";
       if (compact.includes("samsung")) return "samsung";
       if (compact.includes("sbs")) return "sbs";
+      if (compact.includes("sp500")) return "sp500";
       return "";
     }
 
@@ -2628,6 +2636,7 @@
       const words = normalized.split(/\s+/);
       if (words.includes("koa")) return "koa";
       if (words.includes("lal")) return "lal";
+      if (compact.includes("sp500")) return "lal";
       if (words.includes("per") || normalized.includes("player event retargeting")) return "per";
       if (compact.includes("performanceplus") || words.includes("performance")) return "performance";
       return "";

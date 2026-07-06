@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Adalyzer and TTD Data Comparison</title>
+  <title>Adalyser and TTD Data Comparison</title>
   <style>
     @font-face {
       font-display: swap;
@@ -1212,12 +1212,12 @@
     <div class="topbar">
       <div class="brand">
         <div>
-          <h1>Adalyzer and TTD Data Comparison</h1>
+          <h1>Adalyser and TTD Data Comparison</h1>
         </div>
       </div>
       <div class="upload-actions">
         <label class="upload-button">
-          <span id="adalyzerUploadLabel">Upload Adalyzer data</span>
+          <span id="adalyzerUploadLabel">Upload Adalyser data</span>
           <input id="adalyzerInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
         </label>
         <label class="upload-button">
@@ -1302,11 +1302,11 @@
       <section class="chart-panel" aria-label="Campaign metric chart">
         <div class="chart-head">
           <div>
-            <h2 id="chartTitle" class="chart-title">ADALYZER VS TTD TREND</h2>
-            <div id="chartMeta" class="chart-meta">UPLOAD ADALYZER DATA AND TTD DATA TO START</div>
+            <h2 id="chartTitle" class="chart-title">ADALYSER VS TTD TREND</h2>
+            <div id="chartMeta" class="chart-meta">UPLOAD ADALYSER DATA AND TTD DATA TO START</div>
           </div>
           <div class="legend" aria-label="Chart legend">
-            <span class="legend-item"><span class="legend-line adalyzer"></span>Adalyzer</span>
+            <span class="legend-item"><span class="legend-line adalyzer"></span>Adalyser</span>
             <span class="legend-item"><span class="legend-line ttd"></span>TTD</span>
             <span id="metricDefinition" class="metric-pill">CPM = spend / impressions x 1,000</span>
           </div>
@@ -1315,7 +1315,7 @@
           <canvas id="metricCanvas" aria-label="Line graph"></canvas>
           <div id="emptyState" class="empty-state">
             <div class="empty-box">
-              <strong>Upload Adalyzer, then TTD</strong>
+              <strong>Upload Adalyser, then TTD</strong>
               <span>The chart starts at the earliest daily point for the selected Sales House and adds the TTD line when a matching ad group is found.</span>
             </div>
           </div>
@@ -1332,7 +1332,7 @@
         <div class="comparison-head">
           <div>
             <h2 class="comparison-title">Comparison</h2>
-            <div id="comparisonMeta" class="comparison-meta">Upload both workbooks to compare Adalyzer and TTD.</div>
+            <div id="comparisonMeta" class="comparison-meta">Upload both workbooks to compare Adalyser and TTD.</div>
           </div>
           <div class="mode-tabs" role="tablist" aria-label="Comparison view">
             <button type="button" class="mode-button is-active" data-comparison-mode="daily" aria-selected="true">Daily</button>
@@ -1346,8 +1346,6 @@
               <tr>
                 <th>Period</th>
                 <th>Spend</th>
-                <th>A Impr.</th>
-                <th>TTD Impr.</th>
                 <th>A CPM</th>
                 <th>TTD CPM</th>
                 <th>CPM diff %</th>
@@ -1364,7 +1362,7 @@
               </tr>
             </thead>
             <tbody id="comparisonBody">
-              <tr><td class="empty-row" colspan="17">Upload both workbooks to populate the comparison.</td></tr>
+              <tr><td class="empty-row" colspan="15">Upload both workbooks to populate the comparison.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1379,7 +1377,7 @@
         <div class="overall-tables">
           <article class="overall-card">
             <div class="overall-card-head">
-              <h3>Adalyzer data</h3>
+              <h3>Adalyser data</h3>
               <span class="overall-source-pill">Overall</span>
             </div>
             <div class="overall-table-wrap">
@@ -1397,7 +1395,7 @@
                   </tr>
                 </thead>
                 <tbody id="adalyzerOverallBody">
-                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate Adalyzer totals.</td></tr>
+                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate Adalyser totals.</td></tr>
                 </tbody>
                 <tfoot id="adalyzerOverallFoot"></tfoot>
               </table>
@@ -1463,7 +1461,7 @@
         denominator: "users",
         factor: 1,
         text: "CPV = spend / visits",
-        note: "Adalyzer visits / TTD visits"
+        note: "Adalyser visits / TTD visits"
       },
       CPR: {
         label: "CPR",
@@ -1513,7 +1511,7 @@
     };
 
     const lineStyles = {
-      adalyzer: { color: "#f4b400", label: "Adalyzer" },
+      adalyzer: { color: "#f4b400", label: "Adalyser" },
       ttd: { color: "#0066ff", label: "TTD" }
     };
 
@@ -1708,7 +1706,7 @@
 
     async function loadAdalyzerWorkbook(file) {
       try {
-        setLoading(true, "Reading Adalyzer workbook", 8);
+        setLoading(true, "Reading Adalyser workbook", 8);
         clearNotice();
 
         const buffer = await file.arrayBuffer();
@@ -1724,7 +1722,7 @@
         await nextFrame();
         const sheetXml = new TextDecoder("utf-8").decode(sheetBytes);
         const parsed = await parseAdalyzerSheetXml(sheetXml, sharedStrings, (progress) => {
-          setLoading(true, "Aggregating Adalyzer rows", 52 + Math.round(progress * 38));
+          setLoading(true, "Aggregating Adalyser rows", 52 + Math.round(progress * 38));
         });
 
         if (!parsed.adGroups.length) {
@@ -1733,7 +1731,7 @@
 
         state.adalyzer = parsed;
         state.selectedMetric = "CPM";
-        setWorkbookStatus("adalyzer", "Adalyzer data uploaded", file.name);
+        setWorkbookStatus("adalyzer", "Adalyser data uploaded", file.name);
 
         updateMatchedControls();
         setLoading(true, "Drawing chart", 96);
@@ -2049,11 +2047,11 @@
       if (!state.adalyzer || !state.ttd || !state.selectedMatchKey) {
         state.plot = null;
         els.title.textContent = state.adalyzer && state.ttd
-          ? "ADALYZER VS TTD TREND - NO MATCHED AD GROUP SELECTED"
-          : "ADALYZER VS TTD TREND";
+          ? "ADALYSER VS TTD TREND - NO MATCHED AD GROUP SELECTED"
+          : "ADALYSER VS TTD TREND";
         els.meta.textContent = state.adalyzer && state.ttd
           ? "CHANGE THE FILTER TO SEE MATCHED AD GROUPS"
-          : "UPLOAD ADALYZER DATA AND TTD DATA TO START";
+          : "UPLOAD ADALYSER DATA AND TTD DATA TO START";
         renderOverallEmpty();
         renderComparisonTable();
         drawChart();
@@ -2063,7 +2061,7 @@
       const entries = getSelectedEntries();
       if (!entries.length) {
         state.plot = null;
-        els.title.textContent = "ADALYZER VS TTD TREND - NO MATCHED AD GROUPS";
+        els.title.textContent = "ADALYSER VS TTD TREND - NO MATCHED AD GROUPS";
         els.meta.textContent = "CHANGE THE FILTER TO SEE MATCHED AD GROUPS";
         renderOverallPerformance();
         renderComparisonTable();
@@ -2076,13 +2074,13 @@
       const selectedLabel = isAllSelection ? getAllOptionLabel() : entries[0].label;
       if (!selection.start || !selection.end) {
         state.plot = null;
-        els.title.textContent = `ADALYZER VS TTD TREND - ${getSelectionCaption(entries)}`;
+        els.title.textContent = `ADALYSER VS TTD TREND - ${getSelectionCaption(entries)}`;
         els.meta.textContent = "SELECT A DATE RANGE WHERE BOTH FILES HAVE DATA";
         setSummaryEmpty();
         renderOverallPerformance();
         renderComparisonTable();
         drawChart();
-        showNotice("The selected period has no overlapping Adalyzer and TTD data.", true);
+        showNotice("The selected period has no overlapping Adalyser and TTD data.", true);
         return;
       }
 
@@ -2100,26 +2098,25 @@
       const start = selection.start;
       const end = selection.end;
 
-      els.title.textContent = `ADALYZER VS TTD TREND - ${getSelectionCaption(entries)}`;
+      els.title.textContent = `ADALYSER VS TTD TREND - ${getSelectionCaption(entries)}`;
       els.meta.textContent = `${metric.label} • ${series.length} DAILY POINTS • ${formatLongDate(start)} TO ${formatLongDate(end)}`;
       els.metricDefinition.textContent = metric.text;
       els.rangeValue.textContent = `${formatShortDate(start)} - ${formatShortDate(end)}`;
       setSummaryNoteLines(els.rangeNote, []);
       els.spendValue.textContent = moneyFormatter.format(selection.ttdTotals.spend);
-      setSummaryComparison(
-        els.impressionsValue,
-        formatSummaryCount(selection.adalyzerTotals.impressions, selection.adalyzerRowCount > 0),
-        formatSummaryCount(selection.ttdTotals.impressions)
+      els.impressionsValue.textContent = formatSummaryCount(
+        selection.adalyzerTotals.impressions || selection.ttdTotals.impressions,
+        selection.adalyzerRowCount > 0 || selection.ttdTotals.impressions > 0
       );
       setSummaryComparison(els.cpmValue, formatMetricValue(adalyzerCpm), formatMetricValue(ttdCpm));
       setSummaryComparison(els.cpvValue, formatMetricValue(adalyzerCpv), formatMetricValue(ttdCpv));
       setSummaryComparison(els.cprValue, formatMetricValue(adalyzerCpr), formatMetricValue(ttdCpr));
       setSummaryNoteLines(els.cpvNote, [
-        `Adalyzer visits ${formatSummaryCount(selection.adalyzerTotals.users, selection.adalyzerRowCount > 0)}`,
+        `Adalyser visits ${formatSummaryCount(selection.adalyzerTotals.users, selection.adalyzerRowCount > 0)}`,
         `TTD visits ${formatSummaryCount(selection.ttdTotals.users)}`
       ]);
       setSummaryNoteLines(els.cprNote, [
-        `Adalyzer regs ${formatSummaryCount(selection.adalyzerTotals.registrations, selection.adalyzerRowCount > 0)}`,
+        `Adalyser regs ${formatSummaryCount(selection.adalyzerTotals.registrations, selection.adalyzerRowCount > 0)}`,
         `TTD regs ${formatSummaryCount(selection.ttdTotals.registrations)}`
       ]);
 
@@ -2130,9 +2127,9 @@
       if (selection.missingAdalyzer.length) {
         const missingLabels = selection.missingAdalyzer.slice(0, 3).map((entry) => entry.label).join(", ");
         const extra = selection.missingAdalyzer.length > 3 ? ` and ${selection.missingAdalyzer.length - 3} more` : "";
-        warnings.push(`No Adalyzer rows found for ${missingLabels}${extra}; those rows show TTD only.`);
+        warnings.push(`No Adalyser rows found for ${missingLabels}${extra}; those rows show TTD only.`);
       } else if (isAllSelection) {
-        warnings.push(`Matched ${numberFormatter.format(entries.length)} TTD ad groups to Adalyzer.`);
+        warnings.push(`Matched ${numberFormatter.format(entries.length)} TTD ad groups to Adalyser.`);
       } else {
         warnings.push(`Matched TTD ad group: ${entries[0].ttdName}.`);
       }
@@ -2905,7 +2902,7 @@
       const metricLabel = state.plot.metric.label;
       const lines = [
         formatLongDate(point.date),
-        `Adalyzer ${metricLabel}: ${formatMetricValue(point.adalyzerValue)}`,
+        `Adalyser ${metricLabel}: ${formatMetricValue(point.adalyzerValue)}`,
         `TTD ${metricLabel}: ${formatMetricValue(point.ttdValue)}`,
         `Spend: ${moneyFormatter.format(point.ttd ? point.ttd.spend : 0)}`,
         `A visits / TTD visits: ${numberFormatter.format(point.adalyzer.users)} / ${numberFormatter.format(point.ttd ? point.ttd.users : 0)}`
@@ -3053,7 +3050,7 @@
       element.innerHTML = `
         <span class="summary-comparison">
           <span class="summary-source">
-            <span class="summary-source-label">Adalyzer</span>
+            <span class="summary-source-label">Adalyser</span>
             <span class="summary-source-value">${escapeHtml(adalyzerText)}</span>
           </span>
           <span class="summary-source">
@@ -3073,7 +3070,7 @@
     function setSummaryEmpty() {
       els.rangeValue.textContent = "-";
       els.spendValue.textContent = "-";
-      setSummaryComparison(els.impressionsValue, "-", "-");
+      els.impressionsValue.textContent = "-";
       setSummaryComparison(els.cpmValue, "-", "-");
       setSummaryComparison(els.cpvValue, "-", "-");
       setSummaryComparison(els.cprValue, "-", "-");
@@ -3083,7 +3080,7 @@
     }
 
     function renderOverallEmpty() {
-      setOverallTableEmpty(els.adalyzerOverallBody, els.adalyzerOverallFoot, "Upload both workbooks to populate Adalyzer totals.");
+      setOverallTableEmpty(els.adalyzerOverallBody, els.adalyzerOverallFoot, "Upload both workbooks to populate Adalyser totals.");
       setOverallTableEmpty(els.ttdOverallBody, els.ttdOverallFoot, "Upload both workbooks to populate TTD totals.");
       els.spendDistributionChart.innerHTML = createEmptyOverviewSvg("Spend distribution");
       els.dailyPerformanceChart.innerHTML = createEmptyOverviewSvg("Daily performance trend");
@@ -3330,7 +3327,7 @@
         setComparisonEmpty(message);
         els.comparisonMeta.textContent = state.adalyzer && state.ttd
           ? "Pick a period where both uploaded files have data."
-          : "Upload both workbooks to compare Adalyzer and TTD.";
+          : "Upload both workbooks to compare Adalyser and TTD.";
         return;
       }
 
@@ -3347,8 +3344,6 @@
         const tr = document.createElement("tr");
         appendCell(tr, row.period, "text");
         appendCell(tr, moneyFormatter.format(row.ttd.spend), "number");
-        appendCell(tr, formatWholeNumber(row.adalyzer.impressions), "number");
-        appendCell(tr, formatWholeNumber(row.ttd.impressions), "number");
         appendCell(tr, formatMetricValue(row.metrics.CPM.adalyzer), "number");
         appendCell(tr, formatMetricValue(row.metrics.CPM.ttd), "number");
         appendDifferenceCell(tr, row.metrics.CPM.diff);
@@ -3448,7 +3443,7 @@
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.className = "empty-row";
-      td.colSpan = 17;
+      td.colSpan = 15;
       td.textContent = message;
       tr.appendChild(td);
       els.comparisonBody.appendChild(tr);
@@ -3528,7 +3523,7 @@
     }
 
     function createOverallReportPageHtml(source, entries, selection) {
-      const sourceLabel = source === "adalyzer" ? "Adalyzer" : "TTD";
+      const sourceLabel = source === "adalyzer" ? "Adalyser" : "TTD";
       const totals = createOverallTotalsRow(selection, source);
       const rows = buildOverallPerformanceRows(entries, source);
 
@@ -3568,7 +3563,7 @@
                 ${renderOverallPerformanceRow(totals, "TOTAL")}
               </tfoot>
             </table>
-            <p class="report-note">Spend is shared across Adalyzer and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyzer visit and registration fields" : "TTD conversion fields"}.</p>
+            <p class="report-note">Spend is shared across Adalyser and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyser visit and registration fields" : "TTD conversion fields"}.</p>
           </section>
         </article>
       `;
@@ -3622,7 +3617,7 @@
         <article class="report-page">
           <header class="report-header">
             <div class="report-title-pill">
-              <h2 class="report-title">Adalyzer vs. TTD ${metricKey}<br>Data Comparison</h2>
+              <h2 class="report-title">Adalyser vs. TTD ${metricKey}<br>Data Comparison</h2>
             </div>
             <div class="report-kpi-row">
               <div class="report-kpi"><span>A ${metricKey}</span><strong>${formatMetricValue(adMetric)}</strong></div>
@@ -3760,7 +3755,7 @@
           <path d="${ttdPath}" fill="none" stroke="${lineStyles.ttd.color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
           <g font-family="${escapeHtml(uiFont)}" font-size="17" font-weight="700" fill="#163300">
             <line x1="${bounds.right - 248}" y1="22" x2="${bounds.right - 220}" y2="22" stroke="${lineStyles.adalyzer.color}" stroke-width="5" stroke-linecap="round" />
-            <text x="${bounds.right - 211}" y="27">Adalyzer</text>
+            <text x="${bounds.right - 211}" y="27">Adalyser</text>
             <line x1="${bounds.right - 112}" y1="22" x2="${bounds.right - 84}" y2="22" stroke="${lineStyles.ttd.color}" stroke-width="5" stroke-linecap="round" />
             <text x="${bounds.right - 75}" y="27">TTD</text>
           </g>
@@ -3817,70 +3812,57 @@
       return selection.ttdTotals.registrations;
     }
 
-    function getReportDenominatorLabel(metricKey) {
-      if (metricKey === "CPM") return "TTD Impr.";
-      if (metricKey === "CPV") return "TTD Visits";
-      return "TTD Regs";
-    }
-
     function buildReportInsights(entries, selection, metricKey) {
-      const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
-        .filter((row) => row.key !== "na" && row.key !== "unknown");
       const audienceRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).audience, formatAudienceLabel);
       const regionRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).region, formatRegionLabel);
-      const bestPublisher = getBestRow(publisherRows, "CPR");
-      const worstPublisher = getWorstRow(publisherRows, "CPR");
+      const rows = buildAdGroupReportRows(entries, metricKey);
+      const bestAdalyser = getBestMetricSourceRow(rows, metricKey, "adalyzer");
+      const bestTtd = getBestMetricSourceRow(rows, metricKey, "ttd");
+      const worstTtd = getWorstMetricSourceRow(rows, metricKey, "ttd");
+      const largestGap = getLargestMetricGapRow(rows, metricKey);
       const koa = audienceRows.find((row) => row.key === "koa");
       const lal = audienceRows.find((row) => row.key === "lal");
-      const performance = audienceRows.find((row) => row.key === "performance");
-      const per = audienceRows.find((row) => row.key === "per");
       const capitals = regionRows.find((row) => row.key === "capitals");
       const ros = regionRows.find((row) => row.key === "roa");
-      const anomaly = entries.find((entry) => {
-        const info = parseMatchKey(entry.key);
-        const group = state.ttd.groupsByKey.get(entry.key);
-        return info.publisher === "9now"
-          && info.audience === "lal"
-          && info.region === "roa"
-          && group
-          && group.totals.spend > 0
-          && group.totals.registrations === 0;
-      });
-      const ttdCpr = calculateMetric(selection.ttdTotals, metricDefinitions.CPR);
       const metricComparison = createMetricComparison(selection.adalyzerTotals, selection.ttdTotals, metricDefinitions[metricKey]);
 
       return [
         {
-          title: `${metricKey} readout`,
-          body: `All ad groups are tracking at ${formatMetricValue(metricComparison.ttd)} on TTD versus ${formatMetricValue(metricComparison.adalyzer)} on Adalyzer, a ${formatMetricDifferencePercent(metricComparison.diff)} difference.`
+          title: `${metricKey} comparison`,
+          body: `Using shared spend, the Adalyser data view reads ${formatMetricValue(metricComparison.adalyzer)} versus ${formatMetricValue(metricComparison.ttd)} in TTD. ${describeMetricDifference(metricComparison.diff, "Adalyser", "TTD")}`
         },
         {
-          title: "Overall performance",
-          body: `We have delivered ${formatWholeNumber(selection.ttdTotals.registrations)} total registrations with an overall campaign CPR of ${formatMetricValue(ttdCpr)}. Aside from ${anomaly ? `the missing 9Now - LAL - ROS registrations despite logged spend` : `minor tracking differences`}, performance across the board is moving in the right direction.`
+          title: "Adalyser view",
+          body: bestAdalyser
+            ? `${bestAdalyser.label} is the strongest line in the Adalyser data view at ${formatMetricValue(getSourceMetric(bestAdalyser, metricKey, "adalyzer"))} ${metricKey}. The same line reads ${formatMetricValue(getSourceMetric(bestAdalyser, metricKey, "ttd"))} in TTD, so this is the best Adalyser-side efficiency signal to sanity-check against platform results.`
+            : "Adalyser-side efficiency will populate once matching rows include enough metric data."
         },
         {
-          title: "Publisher view",
-          body: `${bestPublisher ? `${bestPublisher.label} is currently the most cost-efficient publisher at ${formatMetricValue(bestPublisher.metrics.CPR.ttd)} CPR with ${formatWholeNumber(bestPublisher.ttd.registrations)} registrations.` : ""} ${worstPublisher ? `${worstPublisher.label} is the highest-cost publisher at ${formatMetricValue(worstPublisher.metrics.CPR.ttd)} CPR.` : ""} ${anomaly ? "I am investigating the 9Now - LAL - ROS tracking discrepancy." : ""}`.trim()
+          title: "TTD view",
+          body: bestTtd
+            ? `${bestTtd.label} is the strongest line in TTD at ${formatMetricValue(getSourceMetric(bestTtd, metricKey, "ttd"))} ${metricKey}, compared with ${formatMetricValue(getSourceMetric(bestTtd, metricKey, "adalyzer"))} in Adalyser. ${worstTtd && worstTtd !== bestTtd ? `${worstTtd.label} is the highest-cost TTD line at ${formatMetricValue(getSourceMetric(worstTtd, metricKey, "ttd"))}.` : ""}`.trim()
+            : "TTD-side efficiency will populate once matching rows include enough metric data."
         },
         {
-          title: "Targeting strategy",
+          title: "Largest source gap",
+          body: largestGap
+            ? `${largestGap.label} has the widest ${metricKey} gap: ${formatMetricValue(getSourceMetric(largestGap, metricKey, "adalyzer"))} in Adalyser versus ${formatMetricValue(getSourceMetric(largestGap, metricKey, "ttd"))} in TTD (${formatMetricDifferencePercent(largestGap.metrics[metricKey].diff)}). Treat this as a reporting or mapping check before drawing a delivery conclusion.`
+            : "Source gaps will populate once both data views have comparable metric values."
+        },
+        {
+          title: "Strategy and market",
           items: [
-            performance ? `Performance+ is delivering ${formatMetricValue(performance.metrics.CPR.ttd)} CPR across ${formatWholeNumber(performance.ttd.registrations)} registrations.` : "",
-            per ? `Player Event Retargeting is delivering ${formatMetricValue(per.metrics.CPR.ttd)} CPR across ${formatWholeNumber(per.ttd.registrations)} registrations.` : "",
-            koa && lal ? `KOA (${formatMetricValue(koa.metrics.CPR.ttd)} CPR) and LAL (${formatMetricValue(lal.metrics.CPR.ttd)} CPR) generated a combined ${formatWholeNumber(koa.ttd.registrations + lal.ttd.registrations)} registrations.` : ""
+            koa && lal ? `KOA vs LAL: Adalyser shows ${formatMetricValue(getSourceMetric(koa, metricKey, "adalyzer"))} vs ${formatMetricValue(getSourceMetric(lal, metricKey, "adalyzer"))}; TTD shows ${formatMetricValue(getSourceMetric(koa, metricKey, "ttd"))} vs ${formatMetricValue(getSourceMetric(lal, metricKey, "ttd"))}.` : "",
+            capitals && ros ? `Capitals vs ROS: Adalyser shows ${formatMetricValue(getSourceMetric(capitals, metricKey, "adalyzer"))} vs ${formatMetricValue(getSourceMetric(ros, metricKey, "adalyzer"))}; TTD shows ${formatMetricValue(getSourceMetric(capitals, metricKey, "ttd"))} vs ${formatMetricValue(getSourceMetric(ros, metricKey, "ttd"))}.` : ""
           ].filter(Boolean)
-        },
-        {
-          title: "Market breakdown",
-          body: capitals && ros
-            ? `Capitals is tracking at ${formatMetricValue(capitals.metrics.CPR.ttd)} CPR across ${formatWholeNumber(capitals.ttd.registrations)} registrations, while ROS is tracking at ${formatMetricValue(ros.metrics.CPR.ttd)} CPR across ${formatWholeNumber(ros.ttd.registrations)} registrations.`
-            : "Market split is available once Capitals and ROS rows are present."
         }
       ];
     }
 
     function buildOverallPerformanceInsights(source, entries, selection) {
-      const sourceLabel = source === "adalyzer" ? "Adalyzer" : "TTD";
+      const sourceContext = source === "adalyzer"
+        ? "Adalyser-sourced campaign data"
+        : "TTD-sourced campaign data";
       const totals = createOverallTotalsRow(selection, source);
       const deliveryLabel = "visits";
       const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
@@ -3897,7 +3879,7 @@
       return [
         {
           title: "Overall readout",
-          body: `${sourceLabel} delivered ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(totals.cpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
+          body: `${sourceContext} shows ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(totals.cpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
         },
         {
           title: "Publisher view",
@@ -3913,8 +3895,47 @@
       ];
     }
 
+    function describeMetricDifference(diff, leftLabel, rightLabel) {
+      if (!Number.isFinite(diff)) {
+        return "The source difference cannot be calculated for the selected period.";
+      }
+      if (Math.abs(diff) < 0.05) {
+        return `${leftLabel} and ${rightLabel} are aligned on this metric.`;
+      }
+      const direction = diff > 0 ? "higher" : "lower";
+      const efficiency = diff > 0 ? "less cost-efficient" : "more cost-efficient";
+      return `${leftLabel} is ${formatMetricDifferenceMagnitude(diff)} ${direction} than ${rightLabel}, which makes it read as ${efficiency} in this view.`;
+    }
+
+    function formatMetricDifferenceMagnitude(value) {
+      return `${percentFormatter.format(Math.abs(value))}%`;
+    }
+
     function getSourceMetric(row, metricKey, source) {
       return row.metrics[metricKey][source];
+    }
+
+    function getMetricDenominatorValue(row, metricKey, source) {
+      const denominator = metricDefinitions[metricKey].denominator;
+      return row[source] ? row[source][denominator] : 0;
+    }
+
+    function getBestMetricSourceRow(rows, metricKey, source) {
+      return rows
+        .filter((row) => Number.isFinite(getSourceMetric(row, metricKey, source)) && getMetricDenominatorValue(row, metricKey, source) > 0)
+        .sort((a, b) => getSourceMetric(a, metricKey, source) - getSourceMetric(b, metricKey, source))[0] || null;
+    }
+
+    function getWorstMetricSourceRow(rows, metricKey, source) {
+      return rows
+        .filter((row) => Number.isFinite(getSourceMetric(row, metricKey, source)) && getMetricDenominatorValue(row, metricKey, source) > 0)
+        .sort((a, b) => getSourceMetric(b, metricKey, source) - getSourceMetric(a, metricKey, source))[0] || null;
+    }
+
+    function getLargestMetricGapRow(rows, metricKey) {
+      return rows
+        .filter((row) => Number.isFinite(row.metrics[metricKey].diff))
+        .sort((a, b) => Math.abs(b.metrics[metricKey].diff) - Math.abs(a.metrics[metricKey].diff))[0] || null;
     }
 
     function getBestSourceRow(rows, metricKey, source) {

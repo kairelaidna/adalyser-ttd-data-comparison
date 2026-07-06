@@ -703,7 +703,7 @@
 
     table {
       border-collapse: collapse;
-      min-width: 1640px;
+      min-width: 1460px;
       width: 100%;
     }
 
@@ -1306,8 +1306,8 @@
             <div id="chartMeta" class="chart-meta">UPLOAD ADALYSER DATA AND TTD DATA TO START</div>
           </div>
           <div class="legend" aria-label="Chart legend">
-            <span class="legend-item"><span class="legend-line adalyzer"></span>Adalyser</span>
-            <span class="legend-item"><span class="legend-line ttd"></span>TTD</span>
+            <span id="adalyzerLegendItem" class="legend-item"><span id="adalyzerLegendLine" class="legend-line adalyzer"></span><span id="adalyzerLegendText">Adalyser</span></span>
+            <span id="ttdLegendItem" class="legend-item"><span class="legend-line ttd"></span>TTD</span>
             <span id="metricDefinition" class="metric-pill">CPM = spend / impressions x 1,000</span>
           </div>
         </div>
@@ -1346,9 +1346,7 @@
               <tr>
                 <th>Period</th>
                 <th>Spend</th>
-                <th>A CPM</th>
-                <th>TTD CPM</th>
-                <th>CPM diff %</th>
+                <th>CPM</th>
                 <th>A Visits</th>
                 <th>A CPV</th>
                 <th>TTD Visits</th>
@@ -1362,7 +1360,7 @@
               </tr>
             </thead>
             <tbody id="comparisonBody">
-              <tr><td class="empty-row" colspan="15">Upload both workbooks to populate the comparison.</td></tr>
+              <tr><td class="empty-row" colspan="13">Upload both workbooks to populate the comparison.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1512,7 +1510,8 @@
 
     const lineStyles = {
       adalyzer: { color: "#f4b400", label: "Adalyser" },
-      ttd: { color: "#0066ff", label: "TTD" }
+      ttd: { color: "#0066ff", label: "TTD" },
+      shared: { color: "#2f6b1f", label: "CPM" }
     };
 
     const els = {
@@ -1530,6 +1529,10 @@
       title: document.getElementById("chartTitle"),
       meta: document.getElementById("chartMeta"),
       metricDefinition: document.getElementById("metricDefinition"),
+      adalyzerLegendItem: document.getElementById("adalyzerLegendItem"),
+      adalyzerLegendLine: document.getElementById("adalyzerLegendLine"),
+      adalyzerLegendText: document.getElementById("adalyzerLegendText"),
+      ttdLegendItem: document.getElementById("ttdLegendItem"),
       canvas: document.getElementById("metricCanvas"),
       empty: document.getElementById("emptyState"),
       loading: document.getElementById("loading"),
@@ -1803,6 +1806,13 @@
       labelEl.title = detail || label;
     }
 
+    function updateChartLegend() {
+      const isSharedCpm = state.selectedMetric === "CPM";
+      els.adalyzerLegendText.textContent = isSharedCpm ? lineStyles.shared.label : lineStyles.adalyzer.label;
+      els.adalyzerLegendLine.style.background = isSharedCpm ? lineStyles.shared.color : lineStyles.adalyzer.color;
+      els.ttdLegendItem.hidden = isSharedCpm;
+    }
+
     function getAllOptionLabel() {
       return filterLabels[state.selectedGroupFilter] || "All ad groups";
     }
@@ -2044,6 +2054,7 @@
     }
 
     function updateDashboard() {
+      updateChartLegend();
       if (!state.adalyzer || !state.ttd || !state.selectedMatchKey) {
         state.plot = null;
         els.title.textContent = state.adalyzer && state.ttd
@@ -2089,8 +2100,7 @@
       const cpmMetric = metricDefinitions.CPM;
       const cpvMetric = metricDefinitions.CPV;
       const cprMetric = metricDefinitions.CPR;
-      const adalyzerCpm = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cpmMetric) : NaN;
-      const ttdCpm = calculateMetric(selection.ttdTotals, cpmMetric);
+      const sharedCpm = calculateMetric(selection.ttdTotals, cpmMetric);
       const adalyzerCpv = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cpvMetric) : NaN;
       const ttdCpv = calculateMetric(selection.ttdTotals, cpvMetric);
       const adalyzerCpr = selection.adalyzerRowCount ? calculateMetric(selection.adalyzerTotals, cprMetric) : NaN;
@@ -2108,7 +2118,7 @@
         selection.adalyzerTotals.impressions || selection.ttdTotals.impressions,
         selection.adalyzerRowCount > 0 || selection.ttdTotals.impressions > 0
       );
-      setSummaryComparison(els.cpmValue, formatMetricValue(adalyzerCpm), formatMetricValue(ttdCpm));
+      els.cpmValue.textContent = formatMetricValue(sharedCpm);
       setSummaryComparison(els.cpvValue, formatMetricValue(adalyzerCpv), formatMetricValue(ttdCpv));
       setSummaryComparison(els.cprValue, formatMetricValue(adalyzerCpr), formatMetricValue(ttdCpr));
       setSummaryNoteLines(els.cpvNote, [
@@ -2220,6 +2230,7 @@
         const ttdRaw = selection.ttdDays.get(dateKey);
         series.push({
           date: dateKey,
+          sharedValue: ttdRaw ? calculateMetric(ttdRaw, metric) : NaN,
           adalyzerValue: adalyzerRaw ? calculateMetric(adalyzerRaw, metric) : NaN,
           ttdValue: ttdRaw ? calculateMetric(ttdRaw, metric) : NaN,
           adalyzer: adalyzerRaw || createTotals(),
@@ -2666,8 +2677,9 @@
       }
 
       const points = state.plot.points;
+      const isSharedCpm = state.plot.metric.label === "CPM";
       const values = points
-        .flatMap((point) => [point.adalyzerValue, point.ttdValue])
+        .flatMap((point) => isSharedCpm ? [point.sharedValue] : [point.adalyzerValue, point.ttdValue])
         .filter((value) => Number.isFinite(value));
       const left = width < 620 ? 52 : 72;
       const right = 24;
@@ -2689,8 +2701,12 @@
       state.plot.bounds = bounds;
 
       drawAxes(ctx, bounds, yMin, yMax, points, width);
-      drawLine(ctx, bounds, points, yMin, yMax, "ttdValue", lineStyles.ttd.color);
-      drawLine(ctx, bounds, points, yMin, yMax, "adalyzerValue", lineStyles.adalyzer.color);
+      if (isSharedCpm) {
+        drawLine(ctx, bounds, points, yMin, yMax, "sharedValue", lineStyles.shared.color);
+      } else {
+        drawLine(ctx, bounds, points, yMin, yMax, "ttdValue", lineStyles.ttd.color);
+        drawLine(ctx, bounds, points, yMin, yMax, "adalyzerValue", lineStyles.adalyzer.color);
+      }
       drawValueLabels(ctx, bounds, points, yMin, yMax, width);
       drawHover(ctx, bounds, points, yMin, yMax, width, height);
     }
@@ -2758,9 +2774,23 @@
       ctx.font = `700 11px ${uiFont}`;
       ctx.textBaseline = "middle";
       const candidates = [];
+      const isSharedCpm = state.plot && state.plot.metric.label === "CPM";
       for (const index of indexes) {
         const point = points[index];
         const x = xForIndex(bounds, index, points.length);
+        if (isSharedCpm) {
+          if (!Number.isFinite(point.sharedValue)) {
+            continue;
+          }
+          candidates.push({
+            x,
+            y: yForValue(bounds, point.sharedValue, yMin, yMax),
+            text: formatMetricValue(point.sharedValue),
+            color: lineStyles.shared.color,
+            preferredOffset: -18
+          });
+          continue;
+        }
         const hasAdalyzer = Number.isFinite(point.adalyzerValue);
         const hasTtd = Number.isFinite(point.ttdValue);
         const adalyzerY = hasAdalyzer ? yForValue(bounds, point.adalyzerValue, yMin, yMax) : null;
@@ -2899,6 +2929,23 @@
         return;
       }
       const point = points[state.hoverIndex];
+      const isSharedCpm = state.plot && state.plot.metric.label === "CPM";
+      const hasShared = point && Number.isFinite(point.sharedValue);
+      if (isSharedCpm) {
+        if (!hasShared) {
+          return;
+        }
+        const x = xForIndex(bounds, state.hoverIndex, points.length);
+        const y = yForValue(bounds, point.sharedValue, yMin, yMax);
+        const lines = [
+          formatLongDate(point.date),
+          `CPM: ${formatMetricValue(point.sharedValue)}`,
+          `Spend: ${moneyFormatter.format(point.ttd ? point.ttd.spend : 0)}`,
+          `Impressions: ${numberFormatter.format(point.ttd ? point.ttd.impressions : 0)}`
+        ];
+        drawHoverBox(ctx, bounds, x, y, lines, width, height, 224, 96);
+        return;
+      }
       const hasAdalyzer = point && Number.isFinite(point.adalyzerValue);
       const hasTtd = point && Number.isFinite(point.ttdValue);
       if (!hasAdalyzer && !hasTtd) {
@@ -2916,8 +2963,12 @@
         `Spend: ${moneyFormatter.format(point.ttd ? point.ttd.spend : 0)}`,
         `A visits / TTD visits: ${numberFormatter.format(point.adalyzer.users)} / ${numberFormatter.format(point.ttd ? point.ttd.users : 0)}`
       ];
-      const boxWidth = Math.min(232, width - 30);
-      const boxHeight = 118;
+      drawHoverBox(ctx, bounds, x, y, lines, width, height, 232, 118);
+    }
+
+    function drawHoverBox(ctx, bounds, x, y, lines, width, height, preferredWidth, preferredHeight) {
+      const boxWidth = Math.min(preferredWidth, width - 30);
+      const boxHeight = preferredHeight;
       const boxX = x + boxWidth + 18 > width ? x - boxWidth - 16 : x + 16;
       const boxY = Math.max(14, Math.min(height - boxHeight - 14, y - 48));
 
@@ -3080,7 +3131,7 @@
       els.rangeValue.textContent = "-";
       els.spendValue.textContent = "-";
       els.impressionsValue.textContent = "-";
-      setSummaryComparison(els.cpmValue, "-", "-");
+      els.cpmValue.textContent = "-";
       setSummaryComparison(els.cpvValue, "-", "-");
       setSummaryComparison(els.cprValue, "-", "-");
       setSummaryNoteLines(els.rangeNote, []);
@@ -3353,9 +3404,7 @@
         const tr = document.createElement("tr");
         appendCell(tr, row.period, "text");
         appendCell(tr, moneyFormatter.format(row.ttd.spend), "number");
-        appendCell(tr, formatMetricValue(row.metrics.CPM.adalyzer), "number");
-        appendCell(tr, formatMetricValue(row.metrics.CPM.ttd), "number");
-        appendDifferenceCell(tr, row.metrics.CPM.diff);
+        appendCell(tr, formatMetricValue(row.metrics.CPM.shared), "number");
         appendCell(tr, formatWholeNumber(row.adalyzer.users), "number");
         appendCell(tr, formatMetricValue(row.metrics.CPV.adalyzer), "number");
         appendCell(tr, formatWholeNumber(row.ttd.users), "number");
@@ -3425,6 +3474,7 @@
       return {
         adalyzer: adalyzerValue,
         ttd: ttdValue,
+        shared: ttdValue,
         diff: calculateMetricDifferencePercent(adalyzerValue, ttdValue)
       };
     }
@@ -3452,7 +3502,7 @@
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.className = "empty-row";
-      td.colSpan = 15;
+      td.colSpan = 13;
       td.textContent = message;
       tr.appendChild(td);
       els.comparisonBody.appendChild(tr);
@@ -3522,7 +3572,7 @@
       }
 
       const selection = aggregateSelection(entries);
-      const metrics = ["CPM", "CPV", "CPR"];
+      const metrics = ["CPV", "CPR"];
       els.pdfReport.innerHTML = [
         createOverallReportPageHtml("adalyzer", entries, selection),
         createOverallReportPageHtml("ttd", entries, selection),
@@ -3534,6 +3584,7 @@
     function createOverallReportPageHtml(source, entries, selection) {
       const sourceLabel = source === "adalyzer" ? "Adalyser" : "TTD";
       const totals = createOverallTotalsRow(selection, source);
+      const sharedCpm = calculateMetric(selection.ttdTotals, metricDefinitions.CPM);
       const rows = buildOverallPerformanceRows(entries, source);
 
       return `
@@ -3544,7 +3595,7 @@
             </div>
             <div class="report-kpi-row report-overall-kpis">
               <div class="report-kpi"><span>Spend</span><strong>${moneyFormatter.format(selection.ttdTotals.spend)}</strong></div>
-              <div class="report-kpi"><span>CPM</span><strong>${formatMetricValue(totals.cpm)}</strong></div>
+              <div class="report-kpi"><span>CPM</span><strong>${formatMetricValue(sharedCpm)}</strong></div>
               <div class="report-kpi"><span>CPV</span><strong>${formatMetricValue(totals.cpv)}</strong></div>
               <div class="report-kpi"><span>CPR</span><strong>${formatMetricValue(totals.cpr)}</strong></div>
             </div>
@@ -3572,7 +3623,7 @@
                 ${renderOverallPerformanceRow(totals, "TOTAL")}
               </tfoot>
             </table>
-            <p class="report-note">Spend is shared across Adalyser and TTD cost calculations. ${sourceLabel} totals use ${source === "adalyzer" ? "Adalyser visit and registration fields" : "TTD conversion fields"}.</p>
+            <p class="report-note">Spend and CPM are shared. ${sourceLabel} CPV and CPR totals use ${source === "adalyzer" ? "Adalyser visit and registration fields" : "TTD conversion fields"}.</p>
           </section>
         </article>
       `;
@@ -3672,14 +3723,6 @@
     }
 
     function getReportTableColumns(metricKey) {
-      if (metricKey === "CPM") {
-        return [
-          { label: "A CPM", value: (row) => formatMetricValue(row.metrics.CPM.adalyzer) },
-          { label: "TTD CPM", value: (row) => formatMetricValue(row.metrics.CPM.ttd) },
-          { label: "Difference", value: (row) => formatMetricDifferencePercent(row.metrics.CPM.diff), className: (row) => getReportDiffClass(row.metrics.CPM.diff) }
-        ];
-      }
-
       if (metricKey === "CPV") {
         return [
           { label: "A visits", value: (row) => formatWholeNumber(row.adalyzer.users) },
@@ -3873,6 +3916,7 @@
         ? "Adalyser-sourced campaign data"
         : "TTD-sourced campaign data";
       const totals = createOverallTotalsRow(selection, source);
+      const sharedCpm = calculateMetric(selection.ttdTotals, metricDefinitions.CPM);
       const deliveryLabel = "visits";
       const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
         .filter((row) => row.key !== "na" && row.key !== "unknown");
@@ -3884,12 +3928,14 @@
       const lal = audienceRows.find((row) => row.key === "lal");
       const capitals = regionRows.find((row) => row.key === "capitals");
       const ros = regionRows.find((row) => row.key === "roa");
+      const cpmMovement = source === "adalyzer" ? buildSharedCpmMovementInsight(selection) : null;
 
       return [
         {
           title: "Overall readout",
-          body: `${sourceContext} shows ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(totals.cpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
+          body: `${sourceContext} shows ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(sharedCpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
         },
+        ...(cpmMovement ? [cpmMovement] : []),
         {
           title: "Publisher view",
           body: `${bestPublisher ? `${bestPublisher.label} is the most efficient publisher at ${formatMetricValue(getSourceMetric(bestPublisher, "CPR", source))} CPR.` : ""} ${worstPublisher ? `${worstPublisher.label} is the highest-cost publisher at ${formatMetricValue(getSourceMetric(worstPublisher, "CPR", source))} CPR.` : ""}`.trim() || "Publisher-level efficiency will populate once matched publisher rows are available."
@@ -3902,6 +3948,63 @@
           ].filter(Boolean)
         }
       ];
+    }
+
+    function buildSharedCpmMovementInsight(selection) {
+      const weeks = buildWeeklyTotalsFromDays(selection.ttdDays);
+      const cpmMetric = metricDefinitions.CPM;
+      const overallCpm = calculateMetric(selection.ttdTotals, cpmMetric);
+      if (!weeks.length || !Number.isFinite(overallCpm)) {
+        return {
+          title: "CPM movement",
+          body: "Shared CPM movement will populate once weekly spend and impression data is available."
+        };
+      }
+
+      const firstWeek = weeks[0];
+      const lastWeek = weeks[weeks.length - 1];
+      const firstWeekCpm = calculateMetric(firstWeek.totals, cpmMetric);
+      const lastWeekCpm = calculateMetric(lastWeek.totals, cpmMetric);
+
+      return {
+        title: "CPM movement",
+        items: [
+          `Overall shared CPM is ${formatMetricValue(overallCpm)}.`,
+          `First week (${formatShortDate(firstWeek.start)} - ${formatShortDate(firstWeek.end)}) was ${formatMetricValue(firstWeekCpm)}; overall is ${formatBenchmarkComparison(overallCpm, firstWeekCpm)}.`,
+          `Last week (${formatShortDate(lastWeek.start)} - ${formatShortDate(lastWeek.end)}) was ${formatMetricValue(lastWeekCpm)}; overall is ${formatBenchmarkComparison(overallCpm, lastWeekCpm)}.`
+        ]
+      };
+    }
+
+    function buildWeeklyTotalsFromDays(days) {
+      const weeks = new Map();
+      const sortedDays = [...days.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      for (const [dateKey, totals] of sortedDays) {
+        const weekStart = getWeekStartKey(dateKey);
+        if (!weeks.has(weekStart)) {
+          weeks.set(weekStart, {
+            start: dateKey,
+            end: dateKey,
+            totals: createTotals()
+          });
+        }
+        const week = weeks.get(weekStart);
+        week.start = minDateKey(week.start, dateKey);
+        week.end = maxDateKey(week.end, dateKey);
+        addTotals(week.totals, totals);
+      }
+      return [...weeks.values()];
+    }
+
+    function formatBenchmarkComparison(current, benchmark) {
+      const diff = calculateMetricDifferencePercent(current, benchmark);
+      if (!Number.isFinite(diff)) {
+        return "not comparable";
+      }
+      if (Math.abs(diff) < 0.05) {
+        return "aligned";
+      }
+      return `${formatMetricDifferenceMagnitude(diff)} ${diff > 0 ? "higher" : "lower"}`;
     }
 
     function describeMetricDifference(diff, leftLabel, rightLabel) {

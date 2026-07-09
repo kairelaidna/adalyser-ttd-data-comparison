@@ -627,7 +627,7 @@
     }
 
     .overall-table {
-      min-width: 900px;
+      min-width: 1000px;
     }
 
     .overall-table th,
@@ -1408,6 +1408,7 @@
                     <th>Spend</th>
                     <th>Impressions</th>
                     <th>CPM</th>
+                    <th>Win Rate</th>
                     <th>Visits</th>
                     <th>CPV</th>
                     <th>Registrations</th>
@@ -1415,7 +1416,7 @@
                   </tr>
                 </thead>
                 <tbody id="adalyzerOverallBody">
-                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate Adalyser totals.</td></tr>
+                  <tr><td class="empty-row" colspan="9">Upload both workbooks to populate Adalyser totals.</td></tr>
                 </tbody>
                 <tfoot id="adalyzerOverallFoot"></tfoot>
               </table>
@@ -1434,6 +1435,7 @@
                     <th>Spend</th>
                     <th>Impressions</th>
                     <th>CPM</th>
+                    <th>Win Rate</th>
                     <th>Visits</th>
                     <th>CPV</th>
                     <th>Registrations</th>
@@ -1441,7 +1443,7 @@
                   </tr>
                 </thead>
                 <tbody id="ttdOverallBody">
-                  <tr><td class="empty-row" colspan="8">Upload both workbooks to populate TTD totals.</td></tr>
+                  <tr><td class="empty-row" colspan="9">Upload both workbooks to populate TTD totals.</td></tr>
                 </tbody>
                 <tfoot id="ttdOverallFoot"></tfoot>
               </table>
@@ -1505,6 +1507,7 @@
     const ttdColumnCandidates = {
       adGroup: ["adgroup"],
       day: ["date", "day"],
+      bids: ["bids"],
       impressions: ["impressions"],
       spend: ["advertisercostadvcurrency"],
       visits: ["01totalclickviewconversions", "sumof01totalclickviewconversions"],
@@ -1845,6 +1848,7 @@
     function normalizeTotals(totals = {}) {
       return {
         spend: Number(totals.spend) || 0,
+        bids: Number(totals.bids) || 0,
         impressions: Number(totals.impressions) || 0,
         users: Number(totals.users) || 0,
         visits: Number(totals.visits) || 0,
@@ -2171,8 +2175,8 @@
       setSummaryNoteLines(els.rangeNote, []);
       els.spendValue.textContent = moneyFormatter.format(selection.ttdTotals.spend);
       els.impressionsValue.textContent = formatSummaryCount(
-        selection.adalyzerTotals.impressions || selection.ttdTotals.impressions,
-        selection.adalyzerRowCount > 0 || selection.ttdTotals.impressions > 0
+        selection.ttdTotals.impressions,
+        selection.ttdTotals.impressions > 0
       );
       els.cpmValue.textContent = formatMetricValue(sharedCpm);
       setSummaryComparison(els.cpvValue, formatMetricValue(adalyzerCpv), formatMetricValue(ttdCpv));
@@ -2298,6 +2302,7 @@
 
     function addTotals(target, source) {
       target.spend += source.spend;
+      target.bids += source.bids;
       target.impressions += source.impressions;
       target.users += source.users;
       target.visits += source.visits;
@@ -2546,6 +2551,7 @@
       const group = getOrCreateTtdGroup(groupsByKey, matchKey, adGroup);
       const daily = group.days.get(day) || createTotals();
       const spend = parseNumber(row[indexes.spend]);
+      const bids = indexes.bids == null ? 0 : parseNumber(row[indexes.bids]);
       const impressions = parseNumber(row[indexes.impressions]);
       const visits = parseNumber(row[indexes.visits]);
       const registrations = parseNumber(row[indexes.registrations02])
@@ -2553,6 +2559,7 @@
         + (indexes.registrations04 == null ? 0 : parseNumber(row[indexes.registrations04]));
 
       daily.spend += spend;
+      daily.bids += bids;
       daily.impressions += impressions;
       daily.users += visits;
       daily.visits += visits;
@@ -2560,6 +2567,7 @@
       group.days.set(day, daily);
 
       group.totals.spend += spend;
+      group.totals.bids += bids;
       group.totals.impressions += impressions;
       group.totals.users += visits;
       group.totals.visits += visits;
@@ -2599,6 +2607,7 @@
     function createTotals() {
       return {
         spend: 0,
+        bids: 0,
         impressions: 0,
         users: 0,
         visits: 0,
@@ -3203,7 +3212,7 @@
     }
 
     function setOverallTableEmpty(body, foot, message) {
-      body.innerHTML = `<tr><td class="empty-row" colspan="8">${escapeHtml(message)}</td></tr>`;
+      body.innerHTML = `<tr><td class="empty-row" colspan="9">${escapeHtml(message)}</td></tr>`;
       foot.innerHTML = "";
     }
 
@@ -3277,7 +3286,7 @@
     function createOverallCsvSection(section) {
       const lines = [
         [section.title],
-        ["Ad group", "Spend", "Impressions", "CPM", "Visits", "CPV", "Registrations", "CPR"],
+        ["Ad group", "Spend", "Impressions", "CPM", "Win Rate", "Visits", "CPV", "Registrations", "CPR"],
         ...section.rows.map((row) => createOverallCsvRow(row)),
         createOverallCsvRow(section.totals, "TOTAL")
       ];
@@ -3290,6 +3299,7 @@
         formatCsvNumber(row.spend, 2),
         formatCsvNumber(row.impressions, 0),
         formatCsvNumber(row.cpm, 2),
+        formatCsvNumber(row.winRate, 1),
         formatCsvNumber(row.visits, 0),
         formatCsvNumber(row.cpv, 2),
         formatCsvNumber(row.registrations, 0),
@@ -3408,9 +3418,10 @@
     function createWorkbookStylesXml() {
       return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <numFmts count="2">
+  <numFmts count="3">
     <numFmt numFmtId="164" formatCode="$#,##0.00"/>
     <numFmt numFmtId="165" formatCode="#,##0"/>
+    <numFmt numFmtId="166" formatCode="0.0%"/>
   </numFmts>
   <fonts count="3">
     <font><sz val="11"/><color rgb="FF163300"/><name val="Arial"/></font>
@@ -3428,7 +3439,7 @@
     <border><left style="thin"><color rgb="FFD8E3D4"/></left><right style="thin"><color rgb="FFD8E3D4"/></right><top style="thin"><color rgb="FFD8E3D4"/></top><bottom style="thin"><color rgb="FFD8E3D4"/></bottom><diagonal/></border>
   </borders>
   <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="9">
+  <cellXfs count="11">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
     <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
@@ -3438,6 +3449,8 @@
     <xf numFmtId="0" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>
     <xf numFmtId="164" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
     <xf numFmtId="165" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
+    <xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>
+    <xf numFmtId="166" fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyNumberFormat="1" applyFill="1" applyBorder="1"/>
   </cellXfs>
   <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
   <dxfs count="0"/>
@@ -3446,7 +3459,7 @@
     }
 
     function createWorksheetXml(section) {
-      const headers = ["Ad group", "Spend", "Impressions", "CPM", "Visits", "CPV", "Registrations", "CPR"];
+      const headers = ["Ad group", "Spend", "Impressions", "CPM", "Win Rate", "Visits", "CPV", "Registrations", "CPR"];
       const dataRows = section.rows.map((row) => createOverallXlsxRow(row));
       const tableRows = [headers, ...dataRows, createOverallXlsxRow(section.totals, "TOTAL")];
       const rows = [
@@ -3454,10 +3467,10 @@
         ...tableRows.map((row, index) => createSheetRow(index + 3, row.map((value, columnIndex) => createXlsxCellValue(value, columnIndex, index === 0, index === tableRows.length - 1))))
       ].join("");
       const lastRow = tableRows.length + 2;
-      const tableRef = `A3:H${lastRow}`;
+      const tableRef = `A3:I${lastRow}`;
       return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <dimension ref="A1:H${lastRow}"/>
+  <dimension ref="A1:I${lastRow}"/>
   <sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
   <sheetFormatPr defaultRowHeight="15"/>
   <cols>
@@ -3466,9 +3479,10 @@
     <col min="3" max="3" width="14" customWidth="1"/>
     <col min="4" max="4" width="10" customWidth="1"/>
     <col min="5" max="5" width="12" customWidth="1"/>
-    <col min="6" max="6" width="10" customWidth="1"/>
-    <col min="7" max="7" width="15" customWidth="1"/>
-    <col min="8" max="8" width="10" customWidth="1"/>
+    <col min="6" max="6" width="12" customWidth="1"/>
+    <col min="7" max="7" width="10" customWidth="1"/>
+    <col min="8" max="8" width="15" customWidth="1"/>
+    <col min="9" max="9" width="10" customWidth="1"/>
   </cols>
   <sheetData>${rows}</sheetData>
   <autoFilter ref="${tableRef}"/>
@@ -3481,6 +3495,7 @@
         row.spend,
         row.impressions,
         row.cpm,
+        row.winRate,
         row.visits,
         row.cpv,
         row.registrations,
@@ -3495,7 +3510,14 @@
       if (columnIndex === 0) {
         return { value, type: "string", style: isTotal ? 6 : 3 };
       }
-      const isInteger = columnIndex === 2 || columnIndex === 4 || columnIndex === 6;
+      if (columnIndex === 4) {
+        return {
+          value: Number.isFinite(value) ? value / 100 : "",
+          type: "number",
+          style: isTotal ? 10 : 9
+        };
+      }
+      const isInteger = columnIndex === 2 || columnIndex === 5 || columnIndex === 7;
       return {
         value: Number.isFinite(value) ? value : "",
         type: "number",
@@ -3667,11 +3689,13 @@
     function buildOverallPerformanceRows(entries, source) {
       return entries.map((entry) => {
         const selection = aggregateSelection([entry]);
+        const shared = selection.ttdTotals;
         const delivery = source === "adalyzer" ? selection.adalyzerTotals : selection.ttdTotals;
         return createOverallPerformanceRow(
           entry.label,
-          selection.ttdTotals.spend,
-          delivery.impressions,
+          shared.spend,
+          shared.impressions,
+          shared.bids,
           delivery.users,
           delivery.registrations
         );
@@ -3679,22 +3703,25 @@
     }
 
     function createOverallTotalsRow(selection, source) {
+      const shared = selection.ttdTotals;
       const delivery = source === "adalyzer" ? selection.adalyzerTotals : selection.ttdTotals;
       return createOverallPerformanceRow(
         "TOTAL",
-        selection.ttdTotals.spend,
-        delivery.impressions,
+        shared.spend,
+        shared.impressions,
+        shared.bids,
         delivery.users,
         delivery.registrations
       );
     }
 
-    function createOverallPerformanceRow(label, spend, impressions, visits, registrations) {
+    function createOverallPerformanceRow(label, spend, impressions, bids, visits, registrations) {
       return {
         label,
         spend,
         impressions,
         cpm: calculateValueMetric(spend, impressions, 1000),
+        winRate: calculateWinRate(impressions, bids),
         visits,
         cpv: calculateValueMetric(spend, visits, 1),
         registrations,
@@ -3709,6 +3736,17 @@
       return (spend / denominator) * factor;
     }
 
+    function calculateWinRate(impressions, bids) {
+      if (!bids || bids <= 0) {
+        return NaN;
+      }
+      return (impressions / bids) * 100;
+    }
+
+    function formatWinRate(value) {
+      return Number.isFinite(value) ? `${percentFormatter.format(value)}%` : "-";
+    }
+
     function renderOverallPerformanceRow(row, labelOverride = "") {
       return `
         <tr>
@@ -3716,6 +3754,7 @@
           <td>${moneyFormatterPrecise.format(row.spend)}</td>
           <td>${formatWholeNumber(row.impressions)}</td>
           <td>${formatMetricValue(row.cpm)}</td>
+          <td>${formatWinRate(row.winRate)}</td>
           <td>${formatWholeNumber(row.visits)}</td>
           <td>${formatMetricValue(row.cpv)}</td>
           <td>${formatWholeNumber(row.registrations)}</td>
@@ -3969,6 +4008,7 @@
     function hasAnyTotals(row) {
       return Boolean(row && (
         row.spend
+        || row.bids
         || row.impressions
         || row.users
         || row.visits
@@ -4089,6 +4129,7 @@
                   <th>Spend</th>
                   <th>Impressions</th>
                   <th>CPM</th>
+                  <th>Win Rate</th>
                   <th>Visits</th>
                   <th>CPV</th>
                   <th>Registrations</th>
@@ -4102,7 +4143,7 @@
                 ${renderOverallPerformanceRow(totals, "TOTAL")}
               </tfoot>
             </table>
-            <p class="report-note">Spend and CPM are shared. ${sourceLabel} CPV and CPR totals use ${source === "adalyzer" ? "Adalyser visit and registration fields" : "TTD conversion fields"}.</p>
+            <p class="report-note">Spend, impressions, CPM, and win rate are sourced from TTD for both views. ${sourceLabel} CPV and CPR totals use ${source === "adalyzer" ? "Adalyser visit and registration fields" : "TTD conversion fields"}.</p>
           </section>
         </article>
       `;
@@ -4391,11 +4432,10 @@
     }
 
     function buildOverallPerformanceInsights(source, entries, selection) {
-      const sourceContext = source === "adalyzer"
-        ? "Adalyser-sourced campaign data"
-        : "TTD-sourced campaign data";
+      const conversionSourceLabel = source === "adalyzer" ? "Adalyser-sourced conversion data" : "TTD conversion data";
       const totals = createOverallTotalsRow(selection, source);
       const sharedCpm = calculateMetric(selection.ttdTotals, metricDefinitions.CPM);
+      const sharedWinRate = calculateWinRate(selection.ttdTotals.impressions, selection.ttdTotals.bids);
       const deliveryLabel = "visits";
       const publisherRows = buildGroupedReportRows(entries, (entry) => parseMatchKey(entry.key).publisher, formatPublisherLabel)
         .filter((row) => row.key !== "na" && row.key !== "unknown");
@@ -4412,7 +4452,7 @@
       return [
         {
           title: "Overall readout",
-          body: `${sourceContext} shows ${formatWholeNumber(totals.impressions)} impressions, ${formatWholeNumber(totals.visits)} ${deliveryLabel}, and ${formatWholeNumber(totals.registrations)} registrations. Overall efficiency is ${formatMetricValue(sharedCpm)} CPM, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
+          body: `TTD media delivery shows ${formatWholeNumber(totals.impressions)} impressions at ${formatMetricValue(sharedCpm)} CPM and ${formatWinRate(sharedWinRate)} win rate. ${conversionSourceLabel} shows ${formatWholeNumber(totals.visits)} ${deliveryLabel}, ${formatWholeNumber(totals.registrations)} registrations, ${formatMetricValue(totals.cpv)} CPV, and ${formatMetricValue(totals.cpr)} CPR.`
         },
         ...(cpmMovement ? [cpmMovement] : []),
         {

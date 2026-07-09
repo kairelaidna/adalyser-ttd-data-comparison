@@ -1229,6 +1229,7 @@
           <input id="ttdInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
         </label>
         <button id="exportPdfButton" class="upload-button" type="button" disabled>Export PDF</button>
+        <button id="exportCsvButton" class="upload-button" type="button" disabled>Export CSV</button>
       </div>
     </div>
 
@@ -1524,6 +1525,7 @@
       adalyzerUploadLabel: document.getElementById("adalyzerUploadLabel"),
       ttdUploadLabel: document.getElementById("ttdUploadLabel"),
       exportPdf: document.getElementById("exportPdfButton"),
+      exportCsv: document.getElementById("exportCsvButton"),
       adGroup: document.getElementById("adGroupSelect"),
       groupFilter: document.getElementById("groupFilterSelect"),
       metric: document.getElementById("metricSelect"),
@@ -1681,6 +1683,18 @@
       }
       void els.pdfReport.offsetHeight;
       window.print();
+    });
+
+    els.exportCsv.addEventListener("click", () => {
+      if (!state.adalyzer || !state.ttd) {
+        return;
+      }
+      const csv = buildOverallCsvExport();
+      if (!csv) {
+        showNotice("There is no matched data available for the CSV export.", true);
+        return;
+      }
+      downloadTextFile(csv, getCsvExportFileName(), "text/csv;charset=utf-8");
     });
 
     els.canvas.addEventListener("mousemove", (event) => {
@@ -1852,6 +1866,7 @@
         els.dateFrom.disabled = true;
         els.dateTo.disabled = true;
         els.exportPdf.disabled = true;
+        els.exportCsv.disabled = true;
         renderOverallEmpty();
         renderComparisonTable();
         return;
@@ -1899,6 +1914,7 @@
       els.metric.value = state.selectedMetric;
       syncDateInputBounds();
       els.exportPdf.disabled = false;
+      els.exportCsv.disabled = false;
       els.empty.style.display = "none";
     }
 
@@ -3178,6 +3194,78 @@
       renderOverallSourceTable("ttd", entries, selection);
       els.spendDistributionChart.innerHTML = createSpendDistributionSvg(entries);
       els.dailyPerformanceChart.innerHTML = createDailyPerformanceSvg(selection, "ttd");
+    }
+
+    function buildOverallCsvExport() {
+      if (!state.adalyzer || !state.ttd) {
+        return "";
+      }
+      const entries = filterEntries(getMatchedEntries(), "all");
+      if (!entries.length) {
+        return "";
+      }
+      const selection = aggregateSelection(entries);
+      if (!selection.start || !selection.end) {
+        return "";
+      }
+      return [
+        createOverallCsvSection("Adalyser Data", "adalyzer", entries, selection),
+        createOverallCsvSection("TTD Data", "ttd", entries, selection)
+      ].join("\n\n");
+    }
+
+    function createOverallCsvSection(title, source, entries, selection) {
+      const rows = buildOverallPerformanceRows(entries, source);
+      const totals = createOverallTotalsRow(selection, source);
+      const lines = [
+        [title],
+        ["Ad group", "Spend", "Impressions", "CPM", "Visits", "CPV", "Registrations", "CPR"],
+        ...rows.map((row) => createOverallCsvRow(row)),
+        createOverallCsvRow(totals, "TOTAL")
+      ];
+      return lines.map((line) => line.map(csvEscape).join(",")).join("\n");
+    }
+
+    function createOverallCsvRow(row, labelOverride = "") {
+      return [
+        labelOverride || row.label,
+        formatCsvNumber(row.spend, 2),
+        formatCsvNumber(row.impressions, 0),
+        formatCsvNumber(row.cpm, 2),
+        formatCsvNumber(row.visits, 0),
+        formatCsvNumber(row.cpv, 2),
+        formatCsvNumber(row.registrations, 0),
+        formatCsvNumber(row.cpr, 2)
+      ];
+    }
+
+    function formatCsvNumber(value, decimals) {
+      return Number.isFinite(value) ? value.toFixed(decimals) : "";
+    }
+
+    function csvEscape(value) {
+      const text = String(value == null ? "" : value);
+      return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, "\"\"")}"` : text;
+    }
+
+    function getCsvExportFileName() {
+      const entries = filterEntries(getMatchedEntries(), "all");
+      const selection = aggregateSelection(entries);
+      const range = selection.start && selection.end ? `${selection.start}_to_${selection.end}` : "overall";
+      return `adalyser-ttd-overall-${range}.csv`;
+    }
+
+    function downloadTextFile(content, fileName, type) {
+      const blob = new Blob(["\ufeff", content], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 500);
+      showNotice(`CSV exported: ${fileName}`, false);
     }
 
     function renderOverallSourceTable(source, entries, selection) {

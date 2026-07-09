@@ -3352,10 +3352,7 @@
 
       sections.forEach((section, index) => {
         const sheetIndex = index + 1;
-        const tableIndex = index + 1;
-        files.set(`xl/worksheets/sheet${sheetIndex}.xml`, createWorksheetXml(section, tableIndex));
-        files.set(`xl/worksheets/_rels/sheet${sheetIndex}.xml.rels`, createWorksheetRelsXml(tableIndex));
-        files.set(`xl/tables/table${tableIndex}.xml`, createTableXml(section, tableIndex));
+        files.set(`xl/worksheets/sheet${sheetIndex}.xml`, createWorksheetXml(section));
       });
 
       return new Blob([createZipArchive(files)], {
@@ -3368,10 +3365,6 @@
         const sheetIndex = index + 1;
         return `<Override PartName="/xl/worksheets/sheet${sheetIndex}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
       }).join("");
-      const tableOverrides = Array.from({ length: sheetCount }, (_, index) => {
-        const tableIndex = index + 1;
-        return `<Override PartName="/xl/tables/table${tableIndex}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml"/>`;
-      }).join("");
       return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -3379,7 +3372,6 @@
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
   <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
   ${sheetOverrides}
-  ${tableOverrides}
 </Types>`;
     }
 
@@ -3410,13 +3402,6 @@
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   ${sheetRels}
   <Relationship Id="rId${sheetCount + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`;
-    }
-
-    function createWorksheetRelsXml(tableIndex) {
-      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/table" Target="../tables/table${tableIndex}.xml"/>
 </Relationships>`;
     }
 
@@ -3460,7 +3445,7 @@
 </styleSheet>`;
     }
 
-    function createWorksheetXml(section, tableIndex) {
+    function createWorksheetXml(section) {
       const headers = ["Ad group", "Spend", "Impressions", "CPM", "Visits", "CPV", "Registrations", "CPR"];
       const dataRows = section.rows.map((row) => createOverallXlsxRow(row));
       const tableRows = [headers, ...dataRows, createOverallXlsxRow(section.totals, "TOTAL")];
@@ -3487,7 +3472,6 @@
   </cols>
   <sheetData>${rows}</sheetData>
   <autoFilter ref="${tableRef}"/>
-  <tableParts count="1"><tablePart r:id="rId1"/></tableParts>
 </worksheet>`;
     }
 
@@ -3537,20 +3521,6 @@
       return Number.isFinite(value) ? String(Math.round(value * 1000000) / 1000000) : "";
     }
 
-    function createTableXml(section, tableIndex) {
-      const tableName = section.tableName.replace(/[^A-Za-z0-9_]/g, "");
-      const lastRow = section.rows.length + 4;
-      const tableRef = `A3:H${lastRow}`;
-      const headers = ["Ad group", "Spend", "Impressions", "CPM", "Visits", "CPV", "Registrations", "CPR"];
-      const columns = headers.map((header, index) => `<tableColumn id="${index + 1}" name="${escapeXmlAttr(header)}"/>`).join("");
-      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<table xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" id="${tableIndex}" name="${tableName}" displayName="${tableName}" ref="${tableRef}" totalsRowShown="0">
-  <autoFilter ref="${tableRef}"/>
-  <tableColumns count="${headers.length}">${columns}</tableColumns>
-  <tableStyleInfo name="TableStyleMedium4" showFirstColumn="0" showLastColumn="0" showRowStripes="1" showColumnStripes="0"/>
-</table>`;
-    }
-
     function columnName(index) {
       let name = "";
       let current = index;
@@ -3595,6 +3565,9 @@
       return concatBytes([...localParts, ...centralParts, end]);
     }
 
+    const zipDosTime = 0;
+    const zipDosDate = ((2026 - 1980) << 9) | (1 << 5) | 1;
+
     function createZipLocalHeader(nameBytes, size, crc) {
       const header = new Uint8Array(30 + nameBytes.length);
       const view = new DataView(header.buffer);
@@ -3602,8 +3575,8 @@
       view.setUint16(4, 20, true);
       view.setUint16(6, 0, true);
       view.setUint16(8, 0, true);
-      view.setUint16(10, 0, true);
-      view.setUint16(12, 0, true);
+      view.setUint16(10, zipDosTime, true);
+      view.setUint16(12, zipDosDate, true);
       view.setUint32(14, crc, true);
       view.setUint32(18, size, true);
       view.setUint32(22, size, true);
@@ -3621,8 +3594,8 @@
       view.setUint16(6, 20, true);
       view.setUint16(8, 0, true);
       view.setUint16(10, 0, true);
-      view.setUint16(12, 0, true);
-      view.setUint16(14, 0, true);
+      view.setUint16(12, zipDosTime, true);
+      view.setUint16(14, zipDosDate, true);
       view.setUint32(16, crc, true);
       view.setUint32(20, size, true);
       view.setUint32(24, size, true);
